@@ -3,6 +3,15 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
 import { updateCount,removeProduct } from "@/redux/slices/cartSlice";
+//import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+//import Checkout from './Checkout';
+//import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+
+const initialOptions = {
+  "client-id": "YOUR-CLIENT-ID-HERE",
+  currency: "USD",
+  intent: "capture",
+};
 
 export default function Cart() {
     
@@ -43,14 +52,26 @@ export default function Cart() {
                       <Link className="cursor-pointer" key={obj.product.id} href={`/products/${obj.product.id}`}><p>show product</p></Link>
                       <button 
                         className='rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                        onClick={remove}
+                        onClick={() => remove(obj.product.id)}
                       >remove</button>
+{/*
+                      <div>
+
+                          <div id="paypal-button-container"></div>
+
+                          <p id="result-message"></p>
+                          <PayPalScriptProvider options={initialOptions}>
+                              <Checkout/>
+                          </PayPalScriptProvider>
+                      </div>
+*/ }
                   </div>
                 </div>
             
                   
               );
           })}
+          
       </div>
   );
   

@@ -7,6 +7,9 @@ export const cartSlice = createSlice({
   },
   reducers: {
     addProduct: (state, action) => {
+
+      const productId = action.payload.product.id;
+      state.products = state.products.filter(item => item.product.id !== productId);
       state.products.push(action.payload);
     },
     updateCount: (state, action) => {

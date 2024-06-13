@@ -2,12 +2,49 @@
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import toast, { Toaster } from 'react-hot-toast';
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
+import { useDispatch, useSelector } from 'react-redux'
+import { removeProduct } from "@/redux/slices/cartSlice";
 export default function ProductPaypal({ obj, count }) {
     const [price, setPrice] = useState(obj.product.price * count);
     const [paypalButtonKey, setPaypalButtonKey] = useState(0); // Key for re-rendering PayPal button
     const [paypalButton, setPaypalButton] = useState(null);
+    
+    const dispatch=useDispatch()
+    
+    const makeBill = () => {
+        console.log("start")
+        const date = new Date();
+                        
+        let day = date.getDate();
+        let month = date.getMonth() + 1;
+        let year = date.getFullYear();
+
+        let currentDate = `${year}-${month}-${day}`;
+        console.log(currentDate)
+        const form = { 
+            "type": "sell",
+            "date": currentDate,
+            "products": [
+                {
+                    "product": obj.product.id,
+                    "quantity": count   
+                }
+            ],
+            "price": price
+        }
+        const dataForm = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form)
+        };
+
+        fetch('http://127.0.0.1:8000/product/bills/', dataForm)
+            .then(response => console.log("sent"))
+        dispatch(removeProduct (obj.product.id))
+
+        
+      };
 
     useEffect(() => {
         setPrice(obj.product.price * count);
@@ -39,6 +76,11 @@ export default function ProductPaypal({ obj, count }) {
                 createOrder={createOrderFunction}
                 onApprove={(data, actions) => {
                     return actions.order.capture().then(function (details) {
+                        
+                        
+                        makeBill();
+                        console.log("end")
+                        
                         toast.success(
                             'Payment successful, thank you ' + details.payer.name.given_name,
                             { duration: 5000 }

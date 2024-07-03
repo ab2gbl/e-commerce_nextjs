@@ -1,50 +1,47 @@
-"use client"
-import { login,getInfo } from "@/redux/slices/userSlice";
-import store from "@/redux/store";
-import { useDispatch } from "react-redux";
-import { useRouter } from 'next/navigation'
+"use client";
+import { login } from "@/redux/slices/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect } from "react";
 
-export default function LoginComp(){
+export default function LoginComp() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const isLog = useSelector((state) => state.user.isLog);
+  const error = useSelector((state) => state.user.error);
 
-    const router = useRouter()
-    const dispatch = useDispatch();
-    const Login = (e) => {
-        e.preventDefault();
-        fetch('http://127.0.0.1:8000/api-token/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: e.target[0].value,
-                password: e.target[1].value,
-
-            }),
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(data);
-                let token = data.token
-                let username = e.target[0].value
-                dispatch(login({token,username} ))
-                dispatch(getInfo(token))
-                router.push('/')
-
-                
-            });
+  useEffect(() => {
+    if (isLog) {
+      router.push("/");
     }
-    return(
-        <form On onSubmit={Login}>
+  }, [isLog, router]);
 
-             <label >
-                UserName
-                <input type="text" />
-            </label>
-            <label >
-                PassWord
-                <input type="password"/>
-            </label>
-            <button type="submit">Login</button>
-        </form>
-    )
+  const Login = (e) => {
+    e.preventDefault();
+    const username = e.target[0].value;
+    const password = e.target[1].value;
+
+    dispatch(login({ username, password }));
+  };
+
+  return (
+    <div>
+      <form onSubmit={Login}>
+        <label>
+          UserName
+          <input type="text" />
+        </label>
+        <label>
+          PassWord
+          <input type="password" />
+        </label>
+        <button type="submit">Login</button>
+      </form>
+
+      {error && <p style={{ color: "red" }}>Login failed</p>}
+
+      <Link href="/register">Register</Link>
+    </div>
+  );
 }

@@ -1,13 +1,12 @@
 "use client";
+import LoginComp from "@/components/LoginComp";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
-import HomeComp from "@/components/HomeComp";
-export default function Home() {
+
+export default function login() {
   return (
     <Provider store={store}>
-      <main>
-        <HomeComp />
-      </main>
+      <LoginComp />
     </Provider>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
+import ProductsHome from "@/components/ProductsHome";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
-import HomeComp from "@/components/HomeComp";
-export default function Home() {
+
+function client() {
   return (
     <Provider store={store}>
       <main>
-        <HomeComp />
+        <ProductsHome />
       </main>
     </Provider>
   );
 }
+
+export default client;

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { initAuth } from "@/utils/user";
+import { initAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 
@@ -24,7 +24,7 @@ const HomeComp1 = () => {
     };
 
     initialize();
-  }, [role]); // Empty dependency array to run once on mount
+  }, [role]);
 
   return <> loading</>;
 };

@@ -1,50 +1,44 @@
-"use client"
-import { login,getInfo } from "@/redux/slices/userSlice";
-import store from "@/redux/store";
+// Example usage in a component (components/Login.js)
 import { useDispatch } from "react-redux";
-import { useRouter } from 'next/navigation'
+import { setTokens, setInfos } from "@/redux/slices/userSlice";
+import { login } from "../utils/auth";
+import { getInfo } from "../utils/user";
+import { useRouter } from "next/navigation";
 
-export default function LoginComp(){
+const LoginComp = () => {
+  const dispatch = useDispatch();
+  const router = useRouter();
 
-    const router = useRouter()
-    const dispatch = useDispatch();
-    const Login = (e) => {
-        e.preventDefault();
-        fetch('http://127.0.0.1:8000/api-token/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: e.target[0].value,
-                password: e.target[1].value,
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    const { username, password } = event.target.elements;
 
-            }),
+    try {
+      const tokens = await login(username.value, password.value);
+      localStorage.setItem("accessToken", tokens.access);
+      localStorage.setItem("refreshToken", tokens.refresh);
+
+      dispatch(
+        setTokens({
+          access: tokens.access,
+          refresh: tokens.refresh,
         })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(data);
-                let token = data.token
-                let username = e.target[0].value
-                dispatch(login({token,username} ))
-                dispatch(getInfo(token))
-                router.push('/')
-
-                
-            });
+      );
+      const info = await getInfo();
+      dispatch(setInfos(info));
+      router.push("/");
+    } catch (error) {
+      console.error("Login failed:", error);
     }
-    return(
-        <form On onSubmit={Login}>
+  };
 
-             <label >
-                UserName
-                <input type="text" />
-            </label>
-            <label >
-                PassWord
-                <input type="password"/>
-            </label>
-            <button type="submit">Login</button>
-        </form>
-    )
-}
+  return (
+    <form onSubmit={handleLogin}>
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+  );
+};
+
+export default LoginComp;

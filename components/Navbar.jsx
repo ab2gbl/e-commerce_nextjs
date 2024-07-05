@@ -4,8 +4,10 @@
 import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import { logout } from "@/redux/slices/userSlice";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
   const role = useSelector((state) => state.user.role);
   const dispatch = useDispatch();
 
@@ -16,7 +18,14 @@ export default function Navbar() {
       {role === "" ? (
         <Link href="/login">Login</Link>
       ) : (
-        <button onClick={() => dispatch(logout())}>Logout</button>
+        <button
+          onClick={() => {
+            dispatch(logout());
+            router.push("/login");
+          }}
+        >
+          Logout
+        </button>
       )}
     </div>
   );

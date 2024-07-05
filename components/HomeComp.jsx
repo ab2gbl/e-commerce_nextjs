@@ -1,7 +1,9 @@
+"use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { getInfo, refreshTokens, setTokens } from "@/redux/slices/userSlice";
+import useInitializeAuth from "@/hooks/useInitializeAuth";
 
 function HomeComp() {
   const router = useRouter();
@@ -9,58 +11,22 @@ function HomeComp() {
   const access = useSelector((state) => state.user.access);
   const role = useSelector((state) => state.user.role);
   const error = useSelector((state) => state.user.error);
+  const isLog = useSelector((state) => state.user.isLog);
 
-  // Load tokens from local storage and set them in Redux state
   useEffect(() => {
-    console.log("Start - Component Mounted");
-    if (access == "") {
-      const access = localStorage.getItem("access_token");
-      const refresh = localStorage.getItem("refresh_token");
-      if (access && refresh) {
-        console.log("Setting tokens from local storage", access, refresh);
-
-        dispatch(setTokens({ access, refresh }));
-      } else {
-        router.push("/login");
-      }
+    if (!isLog) {
+      console.log("User is not logged in, initializing authentication...");
+      useInitializeAuth(); // Call the custom hook for initialization
     }
-  }, [access, dispatch, router]);
+  }, [isLog]); // Ensure useEffect runs when isLog changes
 
-  // Fetch user info and handle token refresh if necessary
   useEffect(() => {
-    if (access) {
-      console.log("Fetching user info");
-      dispatch(getInfo());
+    if (isLog) {
+      if (role === "ADMIN") router.push("/seller");
+      else if (role === "CLIENT") router.push("/client");
+      else router.push("/login");
     }
-  }, [access, dispatch]);
-
-  // Handle role-based redirection
-  useEffect(() => {
-    if (role === "ADMIN") {
-      console.log("Redirecting to /seller");
-      router.push("/seller");
-    } else if (role === "CLIENT") {
-      console.log("Redirecting to /client");
-      router.push("/client");
-    } else if (error) {
-      // If there's an error, attempt to refresh tokens
-      console.log("Error fetching user info, trying to refresh tokens");
-      dispatch(refreshTokens())
-        .then((refreshAction) => {
-          if (refreshAction.payload?.access) {
-            console.log("Tokens refreshed, fetching user info again");
-            dispatch(getInfo());
-          } else {
-            console.log("Token refresh failed");
-            //router.push("/login");
-          }
-        })
-        .catch((error) => {
-          console.error("Token refresh failed: ", error);
-          //router.push("/login");
-        });
-    }
-  }, [role, error, dispatch, router]);
+  }, [isLog, role, router]); // Ensure useEffect runs when isLog or role changes
 
   return <div>Loading...</div>;
 }

@@ -3,6 +3,7 @@
 import { Provider } from "react-redux";
 import store from "@/redux/store";
 import ProductsHome from "@/components/ProductsHome";
+import withRole from "@/utils/withRole";
 
 function seller() {
   return (
@@ -14,4 +15,4 @@ function seller() {
   );
 }
 
-export default seller;
+export default withRole(seller, "ADMIN");

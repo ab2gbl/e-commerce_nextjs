@@ -1,47 +1,44 @@
-"use client";
-import { login } from "@/redux/slices/userSlice";
-import { useDispatch, useSelector } from "react-redux";
+// Example usage in a component (components/Login.js)
+import { useDispatch } from "react-redux";
+import { setTokens, setInfos } from "@/redux/slices/userSlice";
+import { login } from "../utils/auth";
+import { getInfo } from "../utils/user";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useEffect } from "react";
 
-export default function LoginComp() {
-  const router = useRouter();
+const LoginComp = () => {
   const dispatch = useDispatch();
-  const isLog = useSelector((state) => state.user.isLog);
-  const error = useSelector((state) => state.user.error);
+  const router = useRouter();
 
-  useEffect(() => {
-    if (isLog) {
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    const { username, password } = event.target.elements;
+
+    try {
+      const tokens = await login(username.value, password.value);
+      localStorage.setItem("accessToken", tokens.access);
+      localStorage.setItem("refreshToken", tokens.refresh);
+
+      dispatch(
+        setTokens({
+          access: tokens.access,
+          refresh: tokens.refresh,
+        })
+      );
+      const info = await getInfo();
+      dispatch(setInfos(info));
       router.push("/");
+    } catch (error) {
+      console.error("Login failed:", error);
     }
-  }, [isLog, router]);
-
-  const Login = (e) => {
-    e.preventDefault();
-    const username = e.target[0].value;
-    const password = e.target[1].value;
-
-    dispatch(login({ username, password }));
   };
 
   return (
-    <div>
-      <form onSubmit={Login}>
-        <label>
-          UserName
-          <input type="text" />
-        </label>
-        <label>
-          PassWord
-          <input type="password" />
-        </label>
-        <button type="submit">Login</button>
-      </form>
-
-      {error && <p style={{ color: "red" }}>Login failed</p>}
-
-      <Link href="/register">Register</Link>
-    </div>
+    <form onSubmit={handleLogin}>
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
   );
-}
+};
+
+export default LoginComp;

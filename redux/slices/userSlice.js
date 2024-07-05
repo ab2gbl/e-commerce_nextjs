@@ -70,28 +70,39 @@ export const refreshTokens = createAsyncThunk(
 export const userSlice = createSlice({
   name: "user",
   initialState: {
-    access: "",
-    refresh: "",
-    username: "",
-    email: "",
-    role: "",
+    access: null,
+    refresh: null,
+    username: null,
+    email: null,
+    role: null,
     error: false,
     loaded: false,
     isLog: false,
   },
   reducers: {
     logout: (state) => {
-      state.access = "";
-      state.refresh = "";
-      state.username = "";
-      state.email = "";
-      state.role = "";
+      state.access = null;
+      state.refresh = null;
+      state.username = null;
+      state.email = null;
+      state.role = null;
       state.error = false;
     },
     setTokens: (state, action) => {
       const { access, refresh } = action.payload;
       state.access = access;
       state.refresh = refresh;
+    },
+    clearTokens: (state) => {
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.isAuthenticated = false;
+    },
+    setInfos: (state, action) => {
+      state.username = action.payload.username;
+      state.email = action.payload.email;
+      state.role = action.payload.role;
+      state.isLog = true;
     },
   },
   extraReducers: (builder) => {
@@ -131,7 +142,7 @@ export const userSlice = createSlice({
 });
 
 // Export actions
-export const { logout, setTokens } = userSlice.actions;
+export const { logout, setTokens, clearTokens, setInfos } = userSlice.actions;
 
 // Export the reducer
 export default userSlice.reducer;

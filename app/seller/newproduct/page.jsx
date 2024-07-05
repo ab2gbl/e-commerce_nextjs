@@ -3,7 +3,8 @@ import React from "react";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
 import NewProductComp from "@/components/NewProductComp";
-export default function newProduct() {
+import withRole from "@/utils/withRole";
+function newProduct() {
   return (
     <Provider store={store}>
       <main>
@@ -12,3 +13,4 @@ export default function newProduct() {
     </Provider>
   );
 }
+export default withRole(newProduct, "ADMIN");

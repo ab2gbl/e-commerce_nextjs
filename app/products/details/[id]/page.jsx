@@ -1,13 +1,13 @@
 "use client";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
-import HomeComp1 from "@/components/HomeComp1";
+import ProductDetails from "@/components/ProductDetails";
 
-export default function Home() {
+export default function Product({ params }) {
   return (
     <Provider store={store}>
       <main>
-        <HomeComp1 />
+        <ProductDetails id={params} />
       </main>
     </Provider>
   );

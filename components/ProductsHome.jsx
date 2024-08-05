@@ -12,8 +12,14 @@ const ProductsHome = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getProducts());
-  }, []);
+    if (products.products.length === 0) {
+      console.log("Fetching products...");
+      dispatch(getProducts());
+    } else {
+      dispatch(getProducts());
+      console.log("Products already loaded:", products.products);
+    }
+  }, [products.products.length, dispatch]);
 
   useEffect(() => {
     // Filter products based on the selected filter type and search term
@@ -52,19 +58,27 @@ const ProductsHome = () => {
         {/* Filter buttons */}
         <div className="mb-4">
           <button
-            className={`mb-2 w-full ${filterType === "all" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            className={`mb-2 w-full ${
+              filterType === "all" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
             onClick={() => handleFilter("all")}
           >
             All
           </button>
           <button
-            className={`mb-2 w-full ${filterType === "phone" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            className={`mb-2 w-full ${
+              filterType === "phone" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
             onClick={() => handleFilter("phone")}
           >
             Phones
           </button>
           <button
-            className={`mb-2 w-full ${filterType === "accessory" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+            className={`mb-2 w-full ${
+              filterType === "accessory"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200"
+            }`}
             onClick={() => handleFilter("accessory")}
           >
             Accessories
@@ -90,22 +104,22 @@ const ProductsHome = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.id}`}>
-              <div className="bg-white p-4 shadow-md rounded-md cursor-pointer">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-32 object-cover mb-4 rounded-md"
-                />
-                <h2 className="text-lg font-semibold text-gray-900">{`${product.brand} ${product.name}`}</h2>
-                <p className="text-gray-600">{product.type}</p>
-                <p className="text-gray-700 mt-2">${product.price}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  In Stock: {product.in_stock} | {product.available ? "Available" : "Out of Stock"}
-                </p>
-              </div>
-            </Link>
-            
+              <Link key={product.id} href={`/products/details/${product.id}`}>
+                <div className="bg-white p-4 shadow-md rounded-md cursor-pointer">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-32 object-cover mb-4 rounded-md"
+                  />
+                  <h2 className="text-lg font-semibold text-gray-900">{`${product.brand} ${product.name}`}</h2>
+                  <p className="text-gray-600">{product.type}</p>
+                  <p className="text-gray-700 mt-2">${product.price}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    In Stock: {product.in_stock} |{" "}
+                    {product.available ? "Available" : "Out of Stock"}
+                  </p>
+                </div>
+              </Link>
             ))}
           </div>
         )}

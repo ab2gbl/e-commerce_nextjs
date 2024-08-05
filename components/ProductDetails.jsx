@@ -2,17 +2,28 @@
 import { useEffect, useState } from "react";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getProduct } from "@/redux/slices/productsSlice";
+import { getProduct, removeProduct } from "@/redux/slices/productsSlice";
 import { addProduct } from "@/redux/slices/cartSlice";
+import { initAuth } from "@/utils/auth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function ProductDetails({ id }) {
+  const router = useRouter();
   const products = useSelector((state) => state.products);
+  const role = useSelector((state) => state.user.role);
+  const isLog = useSelector((state) => state.user.isLog);
+
   const [dis, setdis] = useState(false);
   const [count, setCount] = useState(1);
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getProduct(id));
-  }, []);
+    if (!isLog) {
+      console.log("initauth");
+      initAuth();
+    }
+  }, [role]);
 
   function add() {
     if (count > 0)
@@ -24,7 +35,7 @@ export default function ProductDetails({ id }) {
 
   return (
     <div className="container mx-auto p-4">
-      {products.isProductLoading ? (
+      {products.isProductLoading || products.product == {} ? (
         <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
       ) : (
         <div className="flex">
@@ -64,6 +75,26 @@ export default function ProductDetails({ id }) {
             >
               add to cart
             </button>
+            {role === "ADMIN" ? (
+              <>
+                <button
+                  className="rounded-md bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  onClick={() => {
+                    dispatch(removeProduct(id.id));
+                    router.push("/");
+                  }}
+                >
+                  delete
+                </button>
+                <Link href={`/products/edit/${id.id}`}>
+                  <button className="rounded-md bg-yellow-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    edit
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>not admin</>
+            )}
 
             <div>
               {dis}

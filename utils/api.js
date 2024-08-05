@@ -23,10 +23,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    //console.log("Error response: will try to refresh token");
     const originalRequest = error.config;
+    //console.log("originalRequest: ", originalRequest);
     if (error.response.status === 401 && !originalRequest._retry) {
+      //console.log("now the first if worked ");
+
       originalRequest._retry = true;
-      const refreshToken = store.getState().user.refreshToken;
+      const refreshToken =
+        store.getState().user.refreshToken ||
+        localStorage.getItem("refreshToken");
+      //console.log("got refreshToken ");
 
       if (refreshToken) {
         try {
@@ -38,6 +45,7 @@ api.interceptors.response.use(
               refreshToken: newTokens.refresh || refreshToken,
             })
           );
+          console.log("tokens refreshed");
           originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
           return api(originalRequest);
         } catch (refreshError) {

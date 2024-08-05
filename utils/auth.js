@@ -1,4 +1,7 @@
-import api from "@/utils/api"; // Assuming api is an axios instance
+import api from "@/utils/api";
+import store from "@/redux/store";
+import { setTokens, setInfos, clearTokens } from "@/redux/slices/userSlice";
+import { getInfo } from "@/utils/user";
 
 export const login = async (username, password) => {
   const response = await api.post("/users/token/", {
@@ -47,5 +50,56 @@ export const refreshTokens = async (refreshToken) => {
     }
     console.error("Failed to refresh token:", error);
     throw error;
+  }
+};
+
+export const initAuth = async () => {
+  try {
+    const { accessToken, refreshToken } = getTokens();
+
+    if (!accessToken) {
+      console.log("No access token");
+      return false; // No access token, cannot proceed
+    }
+
+    let testTokenExpired = await isTokenExpired(accessToken);
+    let validAccessToken;
+    if (testTokenExpired) {
+      console.log("Refreshing tokens");
+      const tokens = await refreshTokens(refreshToken);
+      if (!tokens) {
+        console.log("Failed to refresh tokens");
+        store.dispatch(clearTokens());
+        return false; // Refresh failed, cannot proceed
+      }
+      console.log("refreshed");
+
+      store.dispatch(
+        setTokens({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        })
+      );
+
+      // Update valid access token for further use
+      validAccessToken = tokens.accessToken;
+    } else {
+      validAccessToken = accessToken;
+      store.dispatch(
+        setTokens({
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        })
+      ); // Token is valid
+    }
+
+    // Use the valid access token to fetch user info
+    api.defaults.headers.common["Authorization"] = `Bearer ${validAccessToken}`;
+    const infos = await getInfo();
+    store.dispatch(setInfos(infos));
+    return true;
+  } catch (error) {
+    console.error("Error initializing auth:", error);
+    return false;
   }
 };

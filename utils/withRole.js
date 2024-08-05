@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { initAuth } from "@/utils/user";
+import { initAuth } from "@/utils/auth";
 import store from "@/redux/store";
 
 const withAuth = (WrappedComponent, requiredRole) => {
@@ -19,24 +19,32 @@ const withAuth = (WrappedComponent, requiredRole) => {
             router.push("/login");
             return;
           }
+          setLoading(false);
+          return;
         }
-        if (requiredRole && role !== requiredRole && requiredRole !== "null") {
-          router.push("/"); // Or any other route you use for unauthorized access
+        if (
+          !(requiredRole === "null" && !isLog) &&
+          requiredRole &&
+          role !== requiredRole
+        ) {
+          console.log("pushed from withRole");
+          console.log("1", !(requiredRole === "null" && !isLog));
+          console.log("2", requiredRole);
+          console.log("3", role !== requiredRole, role, requiredRole);
+          router.push("/");
           return;
         }
 
-        setLoading(false); // Authentication and role check complete
+        setLoading(false);
       };
 
       checkAuth();
     }, [role]);
 
-    // Render a loading state until the authentication check is complete
     if (loading) {
-      return <div>Loading...</div>; // Customize this to your loading component
+      return <div>Loading...</div>;
     }
 
-    // Once loading is false, render the wrapped component
     return <WrappedComponent {...props} />;
   };
 };

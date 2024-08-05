@@ -1,76 +1,84 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import toast, { Toaster } from "react-hot-toast";
+import { createProduct, removeCreated } from "@/redux/slices/productsSlice";
+import { useEffect } from "react";
 
 const NewProductComp = () => {
+  const dispatch = useDispatch();
   const router = useRouter();
   const role = useSelector((state) => state.user.role);
+  const created = useSelector((state) => state.products.created);
 
-  if (role != "ADMIN") {
-    if (role == "CLIENT") {
-      router.push("/");
-    }
+  if (role !== "ADMIN") {
+    router.push("/");
   }
-
-  const [name, setName] = useState("");
-  const [picture, setPicture] = useState("");
-  const [brand, setBrand] = useState("");
-  const [price, setPrice] = useState("");
-
-  const handleNameChange = (e) => {
-    setName(e.target.value);
-  };
-
-  const handlePictureChange = (e) => {
-    setPicture(e.target.files[0]);
-  };
-
-  const handleBrandChange = (e) => {
-    setBrand(e.target.value);
-  };
-
-  const handlePriceChange = (e) => {
-    setPrice(e.target.value);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
 
-    // Perform any necessary validation or data processing here
-    // For example, you can send the data to an API or update a state in a parent component
+    const form = {
+      type: formData.get("type"),
+      brand: formData.get("brand"),
+      name: formData.get("name"),
+      image: formData.get("image"),
+      price: formData.get("price"),
+    };
+    dispatch(createProduct(form));
 
-    // Reset the form fields
-    setName("");
-    setPicture("");
-    setBrand("");
-    setPrice("");
+    e.target.reset();
+    // Clear form after submission
   };
+  useEffect(() => {
+    if (created) {
+      toast.success("Product created successfully");
+    }
+    dispatch(removeCreated());
+  }, [created]);
+
+  const notify = () => toast("Here is your toast.");
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Name:
-        <input type="text" value={name} onChange={handleNameChange} />
-      </label>
-      <br />
-      <label>
-        Picture:
-        <input type="file" value={picture} onChange={handlePictureChange} />
-      </label>
-      <br />
-      <label>
-        Brand:
-        <input type="text" value={brand} onChange={handleBrandChange} />
-      </label>
-      <br />
-      <label>
-        Price:
-        <input type="text" value={price} onChange={handlePriceChange} />
-      </label>
-      <br />
-      <button type="submit">Create Product</button>
-    </form>
+    <>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Type:
+          <select name="type" required>
+            <option value="phone" default>
+              Phone
+            </option>
+            <option value="Accessory">Accessory</option>
+          </select>
+        </label>
+        <br />
+        <label>
+          Brand:
+          <input type="text" name="brand" required />
+        </label>
+        <br />
+        <label>
+          Name:
+          <input type="text" name="name" required />
+        </label>
+        <br />
+        <label>
+          Image:
+          <input type="file" name="image" required />
+        </label>
+        <br />
+        <label>
+          Price:
+          <input type="text" name="price" required />
+        </label>
+        <br />
+        <button type="submit">Create Product</button>
+        <br />
+      </form>
+      <button onClick={notify}>toast</button>
+      <Toaster />
+    </>
   );
 };
 

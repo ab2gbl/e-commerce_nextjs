@@ -11,7 +11,7 @@ function seller() {
     <Provider store={store}>
       <main>
         <ProductsHome />
-        <ButtonNewProduct />
+        <ButtonNewProduct url="/seller/newproduct" />
       </main>
     </Provider>
   );

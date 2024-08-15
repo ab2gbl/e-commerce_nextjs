@@ -78,6 +78,9 @@ export default function ProductEditComp({ id }) {
     dispatch(editProduct(updatedFormValues));
     router.push(`/products/details/` + products.product.id);
   };
+  const cancel = () => {
+    router.push(`/products/details/` + id.id);
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -165,6 +168,12 @@ export default function ProductEditComp({ id }) {
               onClick={updateProduct}
             >
               Update Product
+            </button>
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded-md mt-4"
+              onClick={cancel}
+            >
+              Cancel
             </button>
           </div>
         </div>

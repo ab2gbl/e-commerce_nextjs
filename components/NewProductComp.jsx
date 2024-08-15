@@ -49,7 +49,7 @@ const NewProductComp = () => {
             <option value="phone" default>
               Phone
             </option>
-            <option value="Accessory">Accessory</option>
+            <option value="accessory">Accessory</option>
           </select>
         </label>
         <br />

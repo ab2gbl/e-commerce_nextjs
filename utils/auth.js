@@ -49,6 +49,7 @@ export const refreshTokens = async (refreshToken) => {
       throw new Error("Refresh token expired. Please login again.");
     }
     console.error("Failed to refresh token:", error);
+    //return false;
     throw error;
   }
 };

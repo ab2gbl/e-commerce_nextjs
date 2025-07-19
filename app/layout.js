@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
 import ClientProvider from "@/components/ClientProvider";
@@ -16,9 +16,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         <ClientProvider>
-          <Navbar />
+          <NavbarWrapper />
         </ClientProvider>
-        <main>{children}</main>
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );

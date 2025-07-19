@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { useSelector ,useDispatch} from 'react-redux';
 import { removeAll } from "@/redux/slices/cartSlice";
+import { createBill } from "@/redux/slices/billsSlice";
 
 export default function PayAll() {
     const products = useSelector((state) => state.cart.products);
@@ -28,7 +29,7 @@ export default function PayAll() {
     }, [products]);
 
 
-    const makeBills = () => {
+    const makeBills = async () => {
         const date = new Date();
                         
         let day = date.getDate();
@@ -52,21 +53,13 @@ export default function PayAll() {
             "price": totalPrice
         }
 
-        let dataForm = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form)
-        };
-    
-        fetch('http://127.0.0.1:8000/product/bills/', dataForm)
-            .then(response => console.log("sent"))
-        
-        dispatch(removeAll())
-            
-        
-        
-
-        
+        try {
+            await dispatch(createBill(form)).unwrap();
+            dispatch(removeAll());
+            toast.success('Purchase confirmed and cart cleared!', { duration: 5000 });
+        } catch (e) {
+            toast.error('Failed to confirm purchase. Please try again.', { duration: 5000 });
+        }
     };
 
     useEffect(() => {
@@ -95,7 +88,7 @@ export default function PayAll() {
                 createOrder={createOrderFunction}
                 onApprove={(data, actions) => {
                     return actions.order.capture().then(function (details) {
-                        makeBills()
+                        makeBills();
                         toast.success(
                             'Payment successful, thank you ' + details.payer.name.given_name,
                             { duration: 5000 }

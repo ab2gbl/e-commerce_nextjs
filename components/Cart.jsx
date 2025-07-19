@@ -9,6 +9,7 @@ import PayAll from "./PayAll";
 export default function Cart() {
   const cart = useSelector((state) => state.cart);
   const dispatch = useDispatch();
+  const [showModal, setShowModal] = useState(false);
 
   const updateProductCount = (productId, newQuantity) => {
     dispatch(updateCount({ productId, newQuantity }));
@@ -45,7 +46,6 @@ export default function Cart() {
               defaultValue={obj.count}
               onChange={(event) => {
                 updateProductCount(obj.product.id, parseInt(event.target.value))
-                
               }}
             />
             <Link className="cursor-pointer" key={obj.product.id} href={`/products/${obj.product.id}`}>
@@ -57,15 +57,34 @@ export default function Cart() {
             >
               Remove
             </button>
-            <ProductPaypal obj={obj} count={obj.count} />
           </div>
         </div>
       ))}
-      {
-        (cart.products.length > 0)? (<PayAll />):(<></>)
-        
-      
-      }
+      {/* Checkout button and modal */}
+      {cart.products.length > 0 && (
+        <div className="flex justify-end mt-4">
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-md shadow-md transition duration-200"
+            onClick={() => setShowModal(true)}
+          >
+            Checkout
+          </button>
+        </div>
+      )}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold"
+              onClick={() => setShowModal(false)}
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-center">Checkout</h2>
+            <PayAll />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

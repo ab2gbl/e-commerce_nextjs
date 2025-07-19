@@ -4,8 +4,11 @@ import store from "@/redux/store";
 import { refreshTokens as refreshAccessToken } from "./auth";
 import { setTokens, clearTokens } from "@/redux/slices/userSlice";
 
+// Use NEXT_PUBLIC_API_BASE_URL from environment, fallback to default
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://e-commerce-django-hsld.onrender.com";
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use(

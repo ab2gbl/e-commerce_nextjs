@@ -21,10 +21,7 @@ export const createProduct = createAsyncThunk(
     return await response.data;
   }
 );
-export const createBill = createAsyncThunk("createBill", async (param) => {
-  const response = await api.post("/product/bills/", param);
-  return await response.data;
-});
+
 export const editProduct = createAsyncThunk("editProduct", async (param) => {
   console.log(param);
   const response = await api.put("/product/editproduct/" + param.id, param, {
@@ -88,18 +85,6 @@ export const productsSlice = createSlice({
       state.created = true;
     });
     builder.addCase(createProduct.rejected, (state, action) => {
-      state.error = true;
-    });
-
-    builder.addCase(createBill.pending, (state, action) => {
-      state.created = false;
-      state.isProductLoading = true;
-    });
-    builder.addCase(createBill.fulfilled, (state, action) => {
-      state.isProductLoading = false;
-      state.created = true;
-    });
-    builder.addCase(createBill.rejected, (state, action) => {
       state.error = true;
     });
 

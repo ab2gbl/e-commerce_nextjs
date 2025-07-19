@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { useDispatch, useSelector } from 'react-redux'
 import { removeProduct } from "@/redux/slices/cartSlice";
+import { createBill } from "@/redux/slices/billsSlice";
 export default function ProductPaypal({ obj, count }) {
     const [price, setPrice] = useState(obj.product.price * count);
     const [paypalButtonKey, setPaypalButtonKey] = useState(0); // Key for re-rendering PayPal button
@@ -12,39 +13,33 @@ export default function ProductPaypal({ obj, count }) {
     
     const dispatch=useDispatch()
     
-    const makeBill = () => {
-        console.log("start")
+    const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://e-commerce-django-hsld.onrender.com";
+
+    const makeBill = async () => {
         const date = new Date();
-                        
         let day = date.getDate();
         let month = date.getMonth() + 1;
         let year = date.getFullYear();
-
         let currentDate = `${year}-${month}-${day}`;
-        console.log(currentDate)
-        const form = { 
+        const form = {
             "type": "sell",
             "date": currentDate,
             "products": [
                 {
                     "product": obj.product.id,
-                    "quantity": count   
+                    "quantity": count
                 }
             ],
             "price": price
-        }
-        const dataForm = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form)
         };
-
-        fetch('http://127.0.0.1:8000/product/bills/', dataForm)
-            .then(response => console.log("sent"))
-        dispatch(removeProduct (obj.product.id))
-
-        
-      };
+        try {
+            await dispatch(createBill(form)).unwrap();
+            dispatch(removeProduct(obj.product.id));
+            toast.success('Purchase confirmed and product removed from cart!', { duration: 5000 });
+        } catch (e) {
+            toast.error('Failed to confirm purchase. Please try again.', { duration: 5000 });
+        }
+    };
 
     useEffect(() => {
         setPrice(obj.product.price * count);

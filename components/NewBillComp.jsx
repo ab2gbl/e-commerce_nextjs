@@ -3,15 +3,15 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast, { Toaster } from "react-hot-toast";
-import { getProducts, createBill } from "@/redux/slices/productsSlice";
-
+import { getProducts } from "@/redux/slices/productsSlice";
+import { createBill } from "@/redux/slices/billsSlice";
 import { useEffect } from "react";
 
 const NewBillComp = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const role = useSelector((state) => state.user.role);
-  const created = useSelector((state) => state.products.created);
+  const created = useSelector((state) => state.bills.created);
   const products = useSelector((state) => state.products.products);
   const [billProducts, setBillProducts] = React.useState([]);
   useEffect(() => {

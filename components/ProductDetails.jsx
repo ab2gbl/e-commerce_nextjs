@@ -127,15 +127,25 @@ export default function ProductDetails({ id }) {
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Details</h2>
               <ul className="list-disc ml-4 text-gray-700 space-y-1">
-                <li>Dimensions: {products.product.details?.dimensions || '-'}</li>
-                <li>Weight: {products.product.details?.weight || '-'}</li>
-                <li>CPU: {products.product.details?.cpu || '-'}</li>
-                <li>Memory: {products.product.details?.memory || '-'}</li>
-                <li>RAM: {products.product.details?.ram || '-'}</li>
-                <li>Battery: {products.product.details?.battery || '-'}</li>
-                <li>Camera: {products.product.details?.camera || '-'}</li>
-                <li>OS: {products.product.details?.os || '-'}</li>
-                <li>Other Details: {products.product.details?.other_details || '-'}</li>
+                {products.product.type === 'phone' ? (
+                  <>
+                    <li>Dimensions: {products.product.details?.dimensions || '-'}</li>
+                    <li>Weight: {products.product.details?.weight || '-'}</li>
+                    <li>CPU: {products.product.details?.cpu || '-'}</li>
+                    <li>Memory: {products.product.details?.memory || '-'}</li>
+                    <li>RAM: {products.product.details?.ram || '-'}</li>
+                    <li>Battery: {products.product.details?.battery || '-'}</li>
+                    <li>Camera: {products.product.details?.camera || '-'}</li>
+                    <li>OS: {products.product.details?.os || '-'}</li>
+                    <li>Other Details: {products.product.details?.other_details || '-'}</li>
+                  </>
+                ) : (
+                  <>
+                    <li>Dimensions: {products.product.details?.dimensions || '-'}</li>
+                    <li>Weight: {products.product.details?.weight || '-'}</li>
+                    <li>Other Details: {products.product.details?.other_details || '-'}</li>
+                  </>
+                )}
               </ul>
             </div>
           </div>

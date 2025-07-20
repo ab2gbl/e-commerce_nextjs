@@ -24,7 +24,7 @@ const NewBillComp = () => {
       dispatch(getProducts());
       console.log("Products already loaded:", products);
     }
-  }, [products.length, dispatch]);
+  }, [products.length, dispatch,products]);
 
   const resetForm = () => {
     setBillProducts([]);
@@ -256,7 +256,7 @@ const NewBillComp = () => {
                 <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <p>No products added yet. Click "Add Product" to get started.</p>
+                <p>Don&apos;t forget to check &quot;New Bill&quot;</p>
               </div>
             ) : (
               <div className="space-y-4">

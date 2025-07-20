@@ -71,7 +71,7 @@ const LoginComp = () => {
           >
             Login
           </button>
-        </form>
+    </form>
         <div className="mt-6 text-center">
           <span className="text-gray-600">Don't have an account?</span>
           <Link href="/register" className="ml-2 text-blue-600 hover:underline font-semibold">Register</Link>

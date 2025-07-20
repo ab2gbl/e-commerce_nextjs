@@ -30,25 +30,50 @@ export default function ProductDetails({ id }) {
     if (count > 0) {
       dispatch(addProduct({ count: count, product: products.product }));
       toast((t) => (
-        <span>
-          Added to cart!<br />
-          <button
-            className="mt-2 ml-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-            onClick={() => {
-              toast.dismiss(t.id);
-              router.push("/cart");
-            }}
-          >
-            Go to cart
-          </button>
-          <button
-            className="mt-2 ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded"
-            onClick={() => toast.dismiss(t.id)}
-          >
-            Stay
-          </button>
-        </span>
-      ), { duration: 5000 });
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-semibold">Added to cart!</span>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition duration-200"
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push("/cart");
+              }}
+            >
+              Go to Cart
+            </button>
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition duration-200"
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push("/");
+              }}
+            >
+              Go Home
+            </button>
+            <button
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded text-sm font-medium transition duration-200"
+              onClick={() => toast.dismiss(t.id)}
+            >
+              Stay
+            </button>
+          </div>
+        </div>
+      ), { 
+        duration: 6000,
+        style: {
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '12px',
+          minWidth: '280px'
+        }
+      });
     }
   }
   function display() {
@@ -78,6 +103,7 @@ export default function ProductDetails({ id }) {
   }
 
   const maxQty = products.product?.in_stock || 1;
+  const isOutOfStock = products.product?.in_stock === 0;
 
   return (
     <div className="container mx-auto p-4">
@@ -114,39 +140,45 @@ export default function ProductDetails({ id }) {
             </div>
           </div>
           <div className="flex flex-col gap-4 mt-4">
+            {!isOutOfStock ? (
+              <>
             <button
-              className="rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                  className="rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
               onClick={display}
             >
-              Add to cart
-            </button>
-            {dis && (
-              <form className="flex items-center gap-2 mt-2" onSubmit={e => { e.preventDefault(); add(); }}>
-                <input
-                  type="number"
-                  name="count"
-                  min={1}
-                  max={maxQty}
-                  value={count}
-                  onChange={(event) => {
-                    let newValue = parseInt(event.target.value, 10);
-                    if (newValue > maxQty) newValue = maxQty;
-                    if (newValue < 1) newValue = 1;
-                    setCount(newValue);
-                  }}
-                  className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                  disabled={count > maxQty || count < 1}
-                >
-                  Add
+                  Add to cart
                 </button>
-                {count > maxQty && (
-                  <span className="text-red-500 text-sm ml-2">Only {maxQty} in stock</span>
+                {dis && (
+                  <form className="flex items-center gap-2 mt-2" onSubmit={e => { e.preventDefault(); add(); }}>
+                    <input
+                      type="number"
+                      name="count"
+                      min={1}
+                      max={maxQty}
+                      value={count}
+                      onChange={(event) => {
+                        let newValue = parseInt(event.target.value, 10);
+                        if (newValue > maxQty) newValue = maxQty;
+                        if (newValue < 1) newValue = 1;
+                        setCount(newValue);
+                      }}
+                      className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-md bg-yellow-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                      disabled={count > maxQty || count < 1}
+                    >
+                      Add
+            </button>
+                    {count > maxQty && (
+                      <span className="text-red-500 text-sm ml-2">Only {maxQty} in stock</span>
+                    )}
+                  </form>
                 )}
-              </form>
+              </>
+            ) : (
+              <span className="text-red-500 text-lg font-semibold">Out of stock</span>
             )}
             {role === "ADMIN" && (
               <div className="flex gap-2 mt-2">

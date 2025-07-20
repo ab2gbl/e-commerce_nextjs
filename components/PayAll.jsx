@@ -5,11 +5,14 @@ import { useEffect, useState } from 'react';
 import { useSelector ,useDispatch} from 'react-redux';
 import { removeAll } from "@/redux/slices/cartSlice";
 import { createBill } from "@/redux/slices/billsSlice";
+import { useRouter } from "next/navigation";
 
-export default function PayAll() {
+export default function PayAll({ onPaymentSuccess }) {
     const products = useSelector((state) => state.cart.products);
     const dispatch=useDispatch()
+    const router = useRouter();
     const [totalPrice, setTotalPrice] = useState(0);
+    const [paymentCompleted, setPaymentCompleted] = useState(false);
     function calculateTotalPrice() {
         let t = 0;
         for (let i = 0; i < products.length; i++) {
@@ -56,7 +59,8 @@ export default function PayAll() {
         try {
             await dispatch(createBill(form)).unwrap();
             dispatch(removeAll());
-            toast.success('Purchase confirmed and cart cleared!', { duration: 5000 });
+            setPaymentCompleted(true);
+            // Removed duplicate notification - will be handled in onApprove
         } catch (e) {
             toast.error('Failed to confirm purchase. Please try again.', { duration: 5000 });
         }
@@ -89,10 +93,6 @@ export default function PayAll() {
                 onApprove={(data, actions) => {
                     return actions.order.capture().then(function (details) {
                         makeBills();
-                        toast.success(
-                            'Payment successful, thank you ' + details.payer.name.given_name,
-                            { duration: 5000 }
-                        );
                     });
                 }}
                 onCancel={() => toast(
@@ -112,7 +112,35 @@ export default function PayAll() {
 
     return (
         <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_CLIENT_ID }}>
-            {paypalButton}
+            {paymentCompleted ? (
+                <div className="text-center py-8">
+                    <div className="mb-4">
+                        <svg className="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Order Placed Successfully!</h3>
+                    <p className="text-gray-600 mb-4">Your order has been confirmed and sent to our system.</p>
+                    <div className="flex space-x-3 justify-center">
+                        <button
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium transition duration-200"
+                            onClick={() => router.push('/')}
+                        >
+                            Continue Shopping
+                        </button>
+                        <button
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md font-medium transition duration-200"
+                            onClick={() => {
+                                if (onPaymentSuccess) onPaymentSuccess();
+                            }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                paypalButton
+            )}
             <Toaster />
         </PayPalScriptProvider>
     );

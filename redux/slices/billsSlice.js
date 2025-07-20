@@ -25,6 +25,9 @@ export const billsSlice = createSlice({
     test: (state) => {
       state.test = true;
     },
+    removeCreated: (state) => {
+      state.created = false;
+    },
   },
   extraReducers: (builder) => {
     // Get Bills
@@ -53,6 +56,6 @@ export const billsSlice = createSlice({
   },
 });
 
-export const { test } = billsSlice.actions;
+export const { test, removeCreated } = billsSlice.actions;
 
 export default billsSlice.reducer;

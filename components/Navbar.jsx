@@ -35,7 +35,11 @@ export default function Navbar() {
             <Link href="/cart" className="hover:text-blue-600 font-medium">Cart</Link>
             <Link href="/myinfo" className="hover:text-blue-600 font-medium">My Info</Link>
             {role === "ADMIN" && (
-              <Link href="/seller/newadmin" className="hover:text-blue-600 font-medium">Add Admin</Link>
+              <>
+                <Link href="/seller/newadmin" className="hover:text-blue-600 font-medium">Add Admin</Link>
+                <Link href="/seller/newbill" className="hover:text-blue-600 font-medium">Add Bill</Link>
+                <Link href="/seller/bills" className="hover:text-blue-600 font-medium">Bills</Link>
+              </>
             )}
             {!role ? (
               <Link href="/login" className="hover:text-blue-600 font-medium">Login</Link>
@@ -72,7 +76,11 @@ export default function Navbar() {
           <Link href="/cart" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Cart</Link>
           <Link href="/myinfo" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>My Info</Link>
           {role === "ADMIN" && (
-            <Link href="/seller/newadmin" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Add Admin</Link>
+            <>
+              <Link href="/seller/newadmin" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Add Admin</Link>
+              <Link href="/seller/newbill" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Add Bill</Link>
+              <Link href="/seller/bills" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Bills</Link>
+            </>
           )}
           {!role ? (
             <Link href="/login" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Login</Link>
@@ -82,12 +90,12 @@ export default function Navbar() {
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}
                 className="mt-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition duration-200 w-full text-left"
-              >
-                Logout
-              </button>
-            </>
-          )}
-        </div>
+          >
+            Logout
+          </button>
+        </>
+      )}
+    </div>
       )}
     </nav>
   );

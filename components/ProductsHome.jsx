@@ -12,11 +12,9 @@ const ProductsHome = () => {
   const products = useSelector((state) => state.products);
   const dispatch = useDispatch();
 
-  // Only fetch products if not already loaded
+  // Fetch products every time component mounts
   useEffect(() => {
-    if (!products.products || products.products.length === 0) {
       dispatch(getProducts());
-    }
   }, [dispatch]);
 
   useEffect(() => {

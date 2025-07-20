@@ -22,6 +22,14 @@ export default function Cart() {
   return (
     <div className="grid grid-cols-1 gap-4">
       {/* Render cart */}
+      {cart.products.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <svg className="h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A2 2 0 007.48 19h8.04a2 2 0 001.83-1.3L17 13M7 13V6a1 1 0 011-1h5a1 1 0 011 1v7" />
+          </svg>
+          <span className="text-lg font-semibold">Your cart is empty</span>
+        </div>
+      )}
       {cart.products.map((obj) => (
         <div className="bg-white p-4 shadow-md rounded-md grid grid-cols-12" key={obj.product.id}>
           <div className="col-span-2 max-h-48 flex justify-center items-center">
@@ -81,7 +89,7 @@ export default function Cart() {
               ×
             </button>
             <h2 className="text-2xl font-bold mb-4 text-center">Checkout</h2>
-            <PayAll />
+            <PayAll onPaymentSuccess={() => setShowModal(false)} />
           </div>
         </div>
       )}

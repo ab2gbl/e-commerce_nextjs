@@ -22,15 +22,17 @@ const withAuth = (WrappedComponent, requiredRole) => {
           setLoading(false);
           return;
         }
+        // Allow requiredRole to be an array of roles
         if (
           !(requiredRole === "null" && !isLog) &&
           requiredRole &&
-          role !== requiredRole
+          ((Array.isArray(requiredRole) && !requiredRole.includes(role)) ||
+            (!Array.isArray(requiredRole) && role !== requiredRole))
         ) {
           console.log("pushed from withRole");
           console.log("1", !(requiredRole === "null" && !isLog));
           console.log("2", requiredRole);
-          console.log("3", role !== requiredRole, role, requiredRole);
+          console.log("3", role, requiredRole);
           router.push("/");
           return;
         }

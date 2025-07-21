@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getInfo } from "@/utils/user";
-
-export default function MyInfo() {
+import withRole from "@/utils/withRole";
+function MyInfo() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,3 +39,5 @@ export default function MyInfo() {
     </div>
   );
 } 
+
+export default withRole(MyInfo, ["ADMIN", "CLIENT"]);

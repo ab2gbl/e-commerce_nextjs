@@ -2,9 +2,10 @@
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import toast, { Toaster } from 'react-hot-toast';
 //const notify = () => toast('success payement', { icon: '🚀' });
+import withRole from "@/utils/withRole";
 
 
-export default function Paypal() {
+function Paypal() {
     return (
         <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_CLIENT_ID }}>
             <PayPalButtons style={{ layout: "horizontal" }} 
@@ -51,3 +52,5 @@ export default function Paypal() {
         </PayPalScriptProvider>
     );
 }
+
+export default withRole(Paypal, ["ADMIN", "CLIENT"]);

@@ -2,8 +2,10 @@
 import { Provider } from 'react-redux'
 import store from '@/redux/store'
 import Cart from '@/components/Cart';
+import withRole from "@/utils/withRole";
 
-export default function Product({ params }) {
+
+function Product({ params }) {
 
     
 
@@ -19,3 +21,6 @@ export default function Product({ params }) {
     
   );  
 }
+
+export default withRole(Product, ["ADMIN", "CLIENT"]);
+

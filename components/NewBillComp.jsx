@@ -24,7 +24,7 @@ const NewBillComp = () => {
       dispatch(getProducts());
       console.log("Products already loaded:", products);
     }
-  }, [products.length, dispatch,products]);
+  }, [products.length, dispatch]);
 
   const resetForm = () => {
     setBillProducts([]);

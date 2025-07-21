@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function PayAll({ onPaymentSuccess }) {
     const products = useSelector((state) => state.cart.products);
+    const username = useSelector((state) => state.user.username);
     const dispatch=useDispatch()
     const router = useRouter();
     const [totalPrice, setTotalPrice] = useState(0);
@@ -53,7 +54,8 @@ export default function PayAll({ onPaymentSuccess }) {
             "type": "sell",
             "date": currentDate,
             "products": formProducts,
-            "price": totalPrice
+            "price": totalPrice,
+            "user": username
         }
 
         try {
@@ -124,7 +126,11 @@ export default function PayAll({ onPaymentSuccess }) {
                     <div className="flex space-x-3 justify-center">
                         <button
                             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium transition duration-200"
-                            onClick={() => router.push('/')}
+                            onClick={() => {
+                                setTimeout(() => {
+                                    router.push('/');
+                                }, 400); // Delay to let PayPal cleanup
+                            }}
                         >
                             Continue Shopping
                         </button>

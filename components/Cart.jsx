@@ -2,14 +2,42 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Link from "next/link";
-import { updateCount, removeProduct } from "@/redux/slices/cartSlice";
+import { updateCount, removeProduct, addProduct } from "@/redux/slices/cartSlice";
 import ProductPaypal from "@/components/ProductPaypal";
 import PayAll from "./PayAll";
+import api from "@/utils/api";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Cart() {
   const cart = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+
+  // Load cart from localStorage if Redux cart is empty
+  useEffect(() => {
+    if (cart.products.length === 0) {
+      const storedCart = localStorage.getItem("cartProducts");
+      if (storedCart) {
+        try {
+          const parsed = JSON.parse(storedCart);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              dispatch(addProduct(item));
+            });
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("cartProducts", JSON.stringify(cart.products));
+  }, [cart.products]);
 
   const updateProductCount = (productId, newQuantity) => {
     dispatch(updateCount({ productId, newQuantity }));
@@ -19,8 +47,74 @@ export default function Cart() {
     dispatch(removeProduct(productId));
   };
 
+  const checkProductAvailability = async () => {
+    setIsCheckingAvailability(true);
+    try {
+      const unavailableProducts = [];
+      // Check each product in the cart
+      for (const item of cart.products) {
+        try {
+          const response = await api.get(`/product/product/${item.product.id}`);
+          const currentProduct = response.data;
+          if (!currentProduct.available) {
+            unavailableProducts.push({
+              name: item.product.name,
+              reason: "Product is no longer available"
+            });
+            continue;
+          }
+          if (currentProduct.in_stock < item.count) {
+            unavailableProducts.push({
+              name: item.product.name,
+              reason: `Only ${currentProduct.in_stock} items available`
+            });
+            continue;
+          }
+        } catch (err) {
+          if (err.response && err.response.status === 404) {
+            unavailableProducts.push({
+              name: item.product.name,
+              reason: "Product has been deleted"
+            });
+          } else {
+            throw err;
+          }
+        }
+      }
+      if (unavailableProducts.length > 0) {
+        const messages = unavailableProducts.map(p => `${p.name}: ${p.reason}`);
+        toast.error(
+          <div>
+            <p>Some products are not available:</p>
+            <ul>
+              {messages.map((msg, idx) => (
+                <li key={idx}>{msg}</li>
+              ))}
+            </ul>
+          </div>,
+          { duration: 5000 }
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      toast.error("Failed to verify product availability. Please try again.");
+      return false;
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  const handleCheckoutClick = async () => {
+    const isAvailable = await checkProductAvailability();
+    if (isAvailable) {
+      setShowModal(true);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <Toaster />
       {/* Render cart */}
       {cart.products.length === 0 && (
         <div className="flex flex-col items-center justify-center h-64 text-gray-500">
@@ -72,10 +166,15 @@ export default function Cart() {
       {cart.products.length > 0 && (
         <div className="flex justify-end mt-4">
           <button
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-md shadow-md transition duration-200"
-            onClick={() => setShowModal(true)}
+            className={`${
+              isCheckingAvailability 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-green-600 hover:bg-green-700"
+            } text-white font-semibold py-2 px-6 rounded-md shadow-md transition duration-200`}
+            onClick={handleCheckoutClick}
+            disabled={isCheckingAvailability}
           >
-            Checkout
+            {isCheckingAvailability ? "Checking availability..." : "Checkout"}
           </button>
         </div>
       )}

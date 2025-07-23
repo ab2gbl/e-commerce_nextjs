@@ -1,25 +1,37 @@
-"use client"
-import { useRouter } from "next/navigation"
-import { useDispatch, useSelector } from "react-redux"
-import toast, { Toaster } from "react-hot-toast"
-import { createProduct, removeCreated } from "@/redux/slices/productsSlice"
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Smartphone, Headphones, Upload, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+"use client";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import toast, { Toaster } from "react-hot-toast";
+import { createProduct, removeCreated } from "@/redux/slices/productsSlice";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Smartphone, Headphones, Upload, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 const NewProductComp = () => {
-  const dispatch = useDispatch()
-  const router = useRouter()
-  const role = useSelector((state) => state.user.role)
-  const created = useSelector((state) => state.products.created)
-  const [type, setType] = useState("phone")
-  const [isLoading, setIsLoading] = useState(false)
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const role = useSelector((state) => state.user.role);
+  const created = useSelector((state) => state.products.created);
+  const [type, setType] = useState("phone");
+  const [isLoading, setIsLoading] = useState(false);
   const [phoneFields, setPhoneFields] = useState({
     dimensions: "",
     weight: "",
@@ -30,21 +42,21 @@ const NewProductComp = () => {
     camera: "",
     os: "",
     other_details: "",
-  })
+  });
   const [accessoryFields, setAccessoryFields] = useState({
     dimensions: "",
     weight: "",
     other_details: "",
-  })
+  });
 
   if (role !== "ADMIN") {
-    router.push("/")
+    router.push("/");
   }
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    const formData = new FormData(e.target)
+    e.preventDefault();
+    setIsLoading(true);
+    const formData = new FormData(e.target);
     const form = {
       type: formData.get("type"),
       brand: formData.get("brand"),
@@ -53,8 +65,8 @@ const NewProductComp = () => {
       price: formData.get("price"),
       ...phoneFields,
       ...accessoryFields,
-    }
-    dispatch(createProduct(form))
+    };
+    dispatch(createProduct(form));
     setPhoneFields({
       dimensions: "",
       weight: "",
@@ -65,25 +77,28 @@ const NewProductComp = () => {
       camera: "",
       os: "",
       other_details: "",
-    })
-    setAccessoryFields({ dimensions: "", weight: "", other_details: "" })
-    e.target.reset()
-    setIsLoading(false)
-  }
+    });
+    setAccessoryFields({ dimensions: "", weight: "", other_details: "" });
+    e.target.reset();
+    setIsLoading(false);
+  };
+
+  // In NewProductComp.jsx
+  // In NewProductComp.jsx - remove this line
+  // <Toaster />
 
   useEffect(() => {
     if (created) {
       toast.success("Product created successfully!", {
         duration: 4000,
         position: "top-center",
-      })
+      });
+      dispatch(removeCreated());
+      router.push("/seller"); // Immediate redirect
     }
-    dispatch(removeCreated())
-  }, [created, router, dispatch])
-
+  }, [created, router, dispatch]);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <Toaster />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -95,7 +110,9 @@ const NewProductComp = () => {
               </Link>
             </Button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add New Product</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Add New Product
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             Create a new phone or accessory listing for your store
           </p>
@@ -105,10 +122,16 @@ const NewProductComp = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                {type === "phone" ? <Smartphone className="h-5 w-5" /> : <Headphones className="h-5 w-5" />}
+                {type === "phone" ? (
+                  <Smartphone className="h-5 w-5" />
+                ) : (
+                  <Headphones className="h-5 w-5" />
+                )}
                 <span>Product Details</span>
               </CardTitle>
-              <CardDescription>Fill in the information for your new product</CardDescription>
+              <CardDescription>
+                Fill in the information for your new product
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,14 +200,24 @@ const NewProductComp = () => {
                   <Label htmlFor="image">Product Image</Label>
                   <div className="flex items-center space-x-2">
                     <Upload className="h-4 w-4 text-gray-400" />
-                    <Input type="file" name="image" required accept="image/*" className="h-10" />
+                    <Input
+                      type="file"
+                      name="image"
+                      required
+                      accept="image/*"
+                      className="h-10"
+                    />
                   </div>
-                  <p className="text-sm text-gray-500">Upload a high-quality product image</p>
+                  <p className="text-sm text-gray-500">
+                    Upload a high-quality product image
+                  </p>
                 </div>
 
                 {/* Product Specifications */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Product Specifications</h3>
+                  <h3 className="text-lg font-semibold">
+                    Product Specifications
+                  </h3>
 
                   {type === "phone" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,7 +227,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 146.7 x 71.5 x 7.8 mm"
                           value={phoneFields.dimensions}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, dimensions: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              dimensions: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -203,7 +241,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 188g"
                           value={phoneFields.weight}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, weight: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              weight: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -212,7 +255,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., A17 Pro chip"
                           value={phoneFields.cpu}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, cpu: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              cpu: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -221,7 +269,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 128GB, 256GB, 512GB"
                           value={phoneFields.memory}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, memory: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              memory: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -230,7 +283,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 8GB"
                           value={phoneFields.ram}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, ram: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              ram: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -239,7 +297,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 3274 mAh"
                           value={phoneFields.battery}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, battery: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              battery: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -248,7 +311,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 48MP Main + 12MP Ultra Wide"
                           value={phoneFields.camera}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, camera: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              camera: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -257,7 +325,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., iOS 17, Android 14"
                           value={phoneFields.os}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, os: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              os: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -265,7 +338,12 @@ const NewProductComp = () => {
                         <Textarea
                           placeholder="Any other important specifications or features"
                           value={phoneFields.other_details}
-                          onChange={(e) => setPhoneFields((f) => ({ ...f, other_details: e.target.value }))}
+                          onChange={(e) =>
+                            setPhoneFields((f) => ({
+                              ...f,
+                              other_details: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -277,7 +355,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 190 x 160 x 78 mm"
                           value={accessoryFields.dimensions}
-                          onChange={(e) => setAccessoryFields((f) => ({ ...f, dimensions: e.target.value }))}
+                          onChange={(e) =>
+                            setAccessoryFields((f) => ({
+                              ...f,
+                              dimensions: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -286,7 +369,12 @@ const NewProductComp = () => {
                           type="text"
                           placeholder="e.g., 250g"
                           value={accessoryFields.weight}
-                          onChange={(e) => setAccessoryFields((f) => ({ ...f, weight: e.target.value }))}
+                          onChange={(e) =>
+                            setAccessoryFields((f) => ({
+                              ...f,
+                              weight: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -294,7 +382,12 @@ const NewProductComp = () => {
                         <Textarea
                           placeholder="Describe the accessory features, compatibility, etc."
                           value={accessoryFields.other_details}
-                          onChange={(e) => setAccessoryFields((f) => ({ ...f, other_details: e.target.value }))}
+                          onChange={(e) =>
+                            setAccessoryFields((f) => ({
+                              ...f,
+                              other_details: e.target.value,
+                            }))
+                          }
                         />
                       </div>
                     </div>
@@ -305,7 +398,12 @@ const NewProductComp = () => {
                   <Button type="submit" disabled={isLoading} className="flex-1">
                     {isLoading ? "Creating..." : "Create Product"}
                   </Button>
-                  <Button type="button" variant="outline" asChild className="flex-1 bg-transparent">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    className="flex-1 bg-transparent"
+                  >
                     <Link href="/seller">Cancel</Link>
                   </Button>
                 </div>
@@ -315,7 +413,7 @@ const NewProductComp = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NewProductComp
+export default NewProductComp;

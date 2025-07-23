@@ -156,12 +156,12 @@ const NewBillComp = () => {
         position: "top-center",
       });
       dispatch(removeCreated());
+      router.push("/seller/bills"); // Immediate redirect
     }
   }, [created, router, hasSubmitted, dispatch]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <Toaster />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">

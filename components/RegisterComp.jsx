@@ -1,26 +1,43 @@
-"use client"
-import { useState } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Lock, User, Mail, Loader2, CheckCircle, ArrowLeft } from "lucide-react"
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  User,
+  Mail,
+  Loader2,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function RegisterComp() {
-  const [popup, setPopup] = useState(false)
-  const [form, setForm] = useState({ username: "", email: "", password: "" })
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [popup, setPopup] = useState(false);
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://e-commerce-django-hsld.onrender.com"
+  const BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://e-commerce-django-hsld.onrender.com";
 
   const handleRegister = (e) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     fetch(`${BASE_URL}/users/client/`, {
       method: "POST",
@@ -30,25 +47,28 @@ export default function RegisterComp() {
       body: JSON.stringify(form),
     })
       .then(async (res) => {
-        const data = await res.json()
+        const data = await res.json();
         if (res.status === 201) {
-          setPopup(true)
-          setForm({ username: "", email: "", password: "" })
-        } else if (data.username && data.username[0]?.includes("already exists")) {
-          setError("Username already exists.")
+          setPopup(true);
+          setForm({ username: "", email: "", password: "" });
+        } else if (
+          data.username &&
+          data.username[0]?.includes("already exists")
+        ) {
+          setError("Username already exists.");
         } else if (data.email && data.email[0]?.includes("already exists")) {
-          setError("Email already exists.")
+          setError("Email already exists.");
         } else if (data.password) {
-          setError("Password: " + data.password.join(", "))
+          setError("Password: " + data.password.join(", "));
         } else if (data.detail) {
-          setError(data.detail)
+          setError(data.detail);
         } else {
-          setError("Registration failed. Please check your info.")
+          setError("Registration failed. Please check your info.");
         }
       })
       .catch(() => setError("Registration failed. Please try again."))
-      .finally(() => setIsLoading(false))
-  }
+      .finally(() => setIsLoading(false));
+  };
 
   if (popup) {
     return (
@@ -63,10 +83,14 @@ export default function RegisterComp() {
                 Account Created Successfully!
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Your account has been created. You can now sign in with your credentials.
+                Your account has been created. You can now sign in with your
+                credentials.
               </p>
             </div>
-            <Button asChild className="w-full h-12 bg-blue-600 hover:bg-blue-700">
+            <Button
+              asChild
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+            >
               <Link href="/login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Go to Sign In
@@ -75,7 +99,7 @@ export default function RegisterComp() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -85,14 +109,22 @@ export default function RegisterComp() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
           <User className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Join us today and get started</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Create Account
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Join us today and get started
+        </p>
       </div>
 
       <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
         <CardHeader className="space-y-1 pb-6">
-          <CardTitle className="text-2xl font-semibold text-center">Sign Up</CardTitle>
-          <CardDescription className="text-center">Create your account to get started</CardDescription>
+          <CardTitle className="text-2xl font-semibold text-center">
+            Sign Up
+          </CardTitle>
+          <CardDescription className="text-center">
+            Create your account to get started
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -106,7 +138,9 @@ export default function RegisterComp() {
                 <Input
                   type="text"
                   value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, username: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                   placeholder="Choose a username"
@@ -142,7 +176,9 @@ export default function RegisterComp() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   required
                   disabled={isLoading}
                   placeholder="Create a password"
@@ -154,14 +190,23 @@ export default function RegisterComp() {
                   className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600"
                   disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
             {error && (
-              <Alert variant="destructive" className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
-                <AlertDescription className="text-red-700 dark:text-red-400">{error}</AlertDescription>
+              <Alert
+                variant="destructive"
+                className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800"
+              >
+                <AlertDescription className="text-red-700 dark:text-red-400">
+                  {error}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -173,7 +218,7 @@ export default function RegisterComp() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Account...
+                  Creating Account... (first request may take 1 min)
                 </>
               ) : (
                 "Create Account"
@@ -195,5 +240,5 @@ export default function RegisterComp() {
         </CardContent>
       </Card>
     </>
-  )
+  );
 }

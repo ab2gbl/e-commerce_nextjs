@@ -1,8 +1,8 @@
-"use client"
-import LoginComp from "@/components/LoginComp"
-import { Provider } from "react-redux"
-import store from "@/redux/store"
-import withRole from "@/utils/withRole"
+"use client";
+import LoginComp from "@/components/LoginComp";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
+import withRole from "@/utils/withRole";
 
 function LoginPage() {
   return (
@@ -11,7 +11,7 @@ function LoginPage() {
         <LoginComp />
       </div>
     </Provider>
-  )
+  );
 }
 
-export default withRole(LoginPage, "null")
+export default withRole(LoginPage, "null");

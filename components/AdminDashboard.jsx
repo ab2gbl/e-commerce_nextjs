@@ -1,7 +1,10 @@
 "use client";
+import { useRouter } from "next/navigation";
+
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getProducts } from "@/redux/slices/productsSlice";
+import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import {
   Card,
@@ -37,6 +40,8 @@ import {
 } from "lucide-react";
 
 const AdminDashboard = () => {
+  const router = useRouter();
+
   const dispatch = useDispatch();
   const products = useSelector((state) => state.products);
   const [stats, setStats] = useState({
@@ -50,7 +55,18 @@ const AdminDashboard = () => {
   useEffect(() => {
     dispatch(getProducts());
   }, [dispatch]);
-
+  // In your seller dashboard component
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("success") === "product-created") {
+      toast.success("Product created successfully!", {
+        duration: 4000,
+        position: "top-center",
+      });
+      // Clean up URL
+      router.replace("/seller");
+    }
+  }, []);
   useEffect(() => {
     if (products.products) {
       const totalProducts = products.products.length;
@@ -117,6 +133,8 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
+      <Toaster />
+
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <div className="flex items-center justify-between gap-4">
@@ -305,87 +323,134 @@ const AdminDashboard = () => {
 
         {/* Recent Products */}
         {/* Recent Products */}
+        {/* Recent Products - Low Stock Priority */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Products</CardTitle>
+            <CardTitle>Low Stock Alert</CardTitle>
             <CardDescription>
-              Latest additions to your inventory
+              Products that need restocking (ordered by lowest stock)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {products.products?.slice(0, 5).map((product) => (
-                <div key={product.id} className="p-4 border rounded-lg">
-                  {/* Mobile Layout */}
-                  <div className="flex sm:hidden items-start space-x-4">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm truncate">
-                        {product.brand} {product.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 capitalize mb-2">
-                        {product.type}
-                      </p>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-semibold text-sm">
-                            ${product.price}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Stock: {product.in_stock}
-                          </p>
+              {products.products
+                ? [...products.products] // Create a copy of the array first
+                    .sort((a, b) => a.in_stock - b.in_stock) // Sort by stock ascending (lowest first)
+                    .slice(0, 5)
+                    .map((product) => (
+                      <div key={product.id} className="p-4 border rounded-lg">
+                        {/* Mobile Layout */}
+                        <div className="flex sm:hidden items-start space-x-4">
+                          <img
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.name}
+                            className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm truncate">
+                              {product.brand} {product.name}
+                            </h3>
+                            <p className="text-xs text-gray-500 capitalize mb-2">
+                              {product.type}
+                            </p>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-semibold text-sm">
+                                  ${product.price}
+                                </p>
+                                <div className="flex items-center space-x-2">
+                                  <p className="text-xs text-gray-500">
+                                    Stock: {product.in_stock}
+                                  </p>
+                                  {product.in_stock < 5 && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-xs"
+                                    >
+                                      Low Stock
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link href={`/products/details/${product.id}`}>
+                                  View
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/products/details/${product.id}`}>
-                            View
-                          </Link>
-                        </Button>
+
+                        {/* Desktop Layout */}
+                        <div className="hidden sm:grid sm:grid-cols-12 items-center gap-4">
+                          {/* Product Image and Info */}
+                          <div className="col-span-6 flex items-center space-x-4">
+                            <img
+                              src={product.image || "/placeholder.svg"}
+                              alt={product.name}
+                              className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold truncate">
+                                {product.brand} {product.name}
+                              </h3>
+                              <p className="text-sm text-gray-500 capitalize">
+                                {product.type}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Price and Stock */}
+                          <div className="col-span-4 text-right">
+                            <p className="font-semibold">${product.price}</p>
+                            <div className="flex items-center justify-end space-x-2">
+                              <p className="text-sm text-gray-500">
+                                Stock: {product.in_stock}
+                              </p>
+                              {product.in_stock === 0 ? (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  Out of Stock
+                                </Badge>
+                              ) : product.in_stock < 5 ? (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  Low Stock
+                                </Badge>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Button */}
+                          <div className="col-span-2 flex justify-end">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/products/details/${product.id}`}>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    ))
+                : null}
 
-                  {/* Desktop Layout */}
-                  <div className="hidden sm:grid sm:grid-cols-12 items-center gap-4">
-                    {/* Product Image and Info */}
-                    <div className="col-span-6 flex items-center space-x-4">
-                      <img
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.name}
-                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold truncate">
-                          {product.brand} {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 capitalize">
-                          {product.type}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Price and Stock */}
-                    <div className="col-span-4 text-right">
-                      <p className="font-semibold">${product.price}</p>
-                      <p className="text-sm text-gray-500">
-                        Stock: {product.in_stock}
-                      </p>
-                    </div>
-
-                    {/* Button */}
-                    <div className="col-span-2 flex justify-end">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/products/details/${product.id}`}>
-                          View
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
+              {/* Show message if no products */}
+              {(!products.products || products.products.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  No products found
                 </div>
-              ))}
+              )}
+            </div>
+
+            {/* Link to view all products */}
+            <div className="mt-6 text-center">
+              <Button variant="outline" asChild>
+                <Link href="/client">View All Products</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -552,6 +552,8 @@ export function MyPurchasesComp() {
   const bills = useSelector((state) => state.bills);
   const username = useSelector((state) => state.user.username);
   const [filteredBills, setFilteredBills] = useState([]);
+  const [filterType, setFilterType] = useState("all");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("date-desc");
   const { getProductName } = useProductLookup();

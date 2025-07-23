@@ -1,15 +1,15 @@
-"use client";
-import { Provider } from "react-redux";
-import store from "@/redux/store";
-import ProductEditComp from "@/components/ProductEditComp";
-import withRole from "@/utils/withRole";
-function ProductEdit({ params }) {
+"use client"
+import { Provider } from "react-redux"
+import store from "@/redux/store"
+import ProductEditComp from "@/components/ProductEditComp"
+import withRole from "@/utils/withRole"
+
+function ProductEditPage({ params }) {
   return (
     <Provider store={store}>
-      <main>
-        <ProductEditComp id={params} />
-      </main>
+      <ProductEditComp id={params} />
     </Provider>
-  );
+  )
 }
-export default withRole(ProductEdit, "ADMIN");
+
+export default withRole(ProductEditPage, "ADMIN")

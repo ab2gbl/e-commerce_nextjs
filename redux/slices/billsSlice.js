@@ -11,11 +11,24 @@ export const createBill = createAsyncThunk("createBill", async (param) => {
   return await response.data;
 });
 
+export const getUserBills = createAsyncThunk("getUserBills", async () => {
+  const response = await api.get("/product/mybills/", {
+    headers: {
+      "Content-Type": "application/json",
+      // Add authentication headers if needed
+      Authorization: `Bearer ${localStorage.getItem("token")}`, // Adjust based on your auth implementation
+    },
+  });
+
+  return await response.data;
+});
+
 export const billsSlice = createSlice({
   name: "bills",
   initialState: {
     isProductsLoading: true,
     bills: [],
+    userBills: [],
     error: false,
     bill: {},
     created: false,
@@ -52,6 +65,19 @@ export const billsSlice = createSlice({
     });
     builder.addCase(createBill.rejected, (state, action) => {
       state.error = true;
+    });
+    // Get User Bills
+    builder.addCase(getUserBills.pending, (state, action) => {
+      state.isUserBillsLoading = true;
+      state.error = null;
+    });
+    builder.addCase(getUserBills.fulfilled, (state, action) => {
+      state.isUserBillsLoading = false;
+      state.userBills = action.payload;
+    });
+    builder.addCase(getUserBills.rejected, (state, action) => {
+      state.isUserBillsLoading = false;
+      state.error = action.payload;
     });
   },
 });

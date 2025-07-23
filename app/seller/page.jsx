@@ -1,22 +1,15 @@
-"use client";
+"use client"
+import { Provider } from "react-redux"
+import store from "@/redux/store"
+import AdminDashboard from "@/components/AdminDashboard"
+import withRole from "@/utils/withRole"
 
-import { Provider } from "react-redux";
-import store from "@/redux/store";
-import ProductsHome from "@/components/ProductsHome";
-import withRole from "@/utils/withRole";
-import ButtonNewProduct from "@/components/ButtonNewProduct";
-
-
-function seller() {
+function SellerPage() {
   return (
     <Provider store={store}>
-      <main>
-        <ProductsHome />
-        <ButtonNewProduct url="/seller/newproduct" />
-        
-      </main>
+      <AdminDashboard />
     </Provider>
-  );
+  )
 }
 
-export default withRole(seller, "ADMIN");
+export default withRole(SellerPage, "ADMIN")

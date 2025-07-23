@@ -1,16 +1,15 @@
-"use client";
-import React from "react";
-import { Provider } from "react-redux";
-import store from "@/redux/store";
-import NewBillComp from "@/components/NewBillComp";
-import withRole from "@/utils/withRole";
-function newBill() {
+"use client"
+import { Provider } from "react-redux"
+import store from "@/redux/store"
+import NewBillComp from "@/components/NewBillComp"
+import withRole from "@/utils/withRole"
+
+function NewBillPage() {
   return (
     <Provider store={store}>
-      <main>
-        <NewBillComp />
-      </main>
+      <NewBillComp />
     </Provider>
-  );
+  )
 }
-export default withRole(newBill, "ADMIN");
+
+export default withRole(NewBillPage, "ADMIN")

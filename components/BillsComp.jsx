@@ -1,702 +1,914 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getBills } from "@/redux/slices/billsSlice";
-import { useEffect, useState, useMemo } from "react";
-import api from "@/utils/api";
-import withRole from "@/utils/withRole";
+import { getBills, getUserBills } from "@/redux/slices/billsSlice";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  FileText,
+  Search,
+  Plus,
+  ArrowLeft,
+  Calendar,
+  Download,
+  ShoppingBag,
+  Package,
+  Loader2,
+} from "lucide-react";
+import { useProductLookup } from "./ProductLookup";
 
-export default function BillsComp() {
+export function BillsComp() {
   const dispatch = useDispatch();
-  const bills = useSelector((state) => state.bills.bills);
-  const isLoading = useSelector((state) => state.bills.isProductsLoading);
-  const error = useSelector((state) => state.bills.error);
-  
-  // Filter states
+  const bills = useSelector((state) => state.bills);
+  const [filteredBills, setFilteredBills] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [searchProduct, setSearchProduct] = useState("");
-  const [searchUser, setSearchUser] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
-  
-  // Sort states
-  const [sortBy, setSortBy] = useState("date");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("date-desc");
+  const { getProductName } = useProductLookup();
 
   useEffect(() => {
     dispatch(getBills());
   }, [dispatch]);
 
-  // Filter and sort bills
-  const filteredAndSortedBills = useMemo(() => {
-    let filtered = bills;
+  useEffect(() => {
+    if (bills.bills) {
+      let filtered = [...bills.bills];
 
-    // Filter by type
-    if (filterType !== "all") {
-      filtered = filtered.filter(bill => {
-        if (filterType === "sale") {
-          return !!bill.user;
+      // Apply type filter
+      if (filterType !== "all") {
+        filtered = filtered.filter((bill) => {
+          if (filterType === "user_sale") {
+            // Filter for sales that have a user (orders from users)
+            return bill.type === "sell" && bill.user != null;
+          } else if (filterType === "sell") {
+            // Filter for admin-created sales (bills without user)
+            return bill.type === "sell" && bill.user == null;
+          } else {
+            return bill.type === filterType;
+          }
+        });
+      }
+
+      // Apply search filter
+      if (searchTerm.trim() !== "") {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        filtered = filtered.filter((bill) => {
+          return (
+            bill.id.toString().includes(lowerCaseSearchTerm) ||
+            bill.date.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.price.toString().includes(lowerCaseSearchTerm) ||
+            bill.type.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.user?.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.products_details?.some((item) =>
+              getProductName(item.product.id)
+                .toLowerCase()
+                .includes(lowerCaseSearchTerm)
+            )
+          );
+        });
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case "date-asc":
+            return new Date(a.date) - new Date(b.date);
+          case "date-desc":
+            return new Date(b.date) - new Date(a.date);
+          case "price-asc":
+            return a.price - b.price;
+          case "price-desc":
+            return b.price - a.price;
+          default:
+            return new Date(b.date) - new Date(a.date);
         }
-        if (filterType === "buy" || filterType === "sell") {
-          return bill.type === filterType && !bill.user;
-        }
-        return true;
       });
+
+      setFilteredBills(filtered);
     }
-
-    // Filter by user search
-    if (searchUser.trim()) {
-      filtered = filtered.filter(bill =>
-        bill.user && bill.user.toLowerCase().includes(searchUser.toLowerCase())
-      );
-    }
-
-    // Filter by product search
-    if (searchProduct.trim()) {
-      filtered = filtered.filter(bill => 
-        bill.products_details?.some(productDetail => 
-          `${productDetail.product.brand} ${productDetail.product.name}`
-            .toLowerCase()
-            .includes(searchProduct.toLowerCase())
-        )
-      );
-    }
-
-    // Filter by date range
-    if (dateFrom) {
-      filtered = filtered.filter(bill => new Date(bill.date) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      filtered = filtered.filter(bill => new Date(bill.date) <= new Date(dateTo));
-    }
-
-    // Filter by price range
-    if (priceFrom) {
-      filtered = filtered.filter(bill => parseFloat(bill.price) >= parseFloat(priceFrom));
-    }
-    if (priceTo) {
-      filtered = filtered.filter(bill => parseFloat(bill.price) <= parseFloat(priceTo));
-    }
-
-    // Create a new array and sort it
-    const sortedBills = [...filtered].sort((a, b) => {
-      let aValue, bValue;
-      
-      switch (sortBy) {
-        case "id":
-          aValue = a.id;
-          bValue = b.id;
-          break;
-        case "date":
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-          break;
-        case "price":
-          aValue = parseFloat(a.price);
-          bValue = parseFloat(b.price);
-          break;
-        case "type":
-          aValue = a.type;
-          bValue = b.type;
-          break;
-        default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-      }
-
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    return sortedBills;
-  }, [bills, filterType, searchProduct, searchUser, dateFrom, dateTo, priceFrom, priceTo, sortBy, sortOrder]);
-
+  }, [bills.bills, searchTerm, filterType, sortBy]);
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const getTypeColor = (type, user) => {
-    if (user) return 'bg-yellow-100 text-yellow-800';
-    return type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+  const getProductDetails = (productId) => {
+    // This would ideally come from a products lookup, but for now we'll show the ID
+    return `Product #${productId}`;
   };
-
-  const clearFilters = () => {
-    setFilterType("all");
-    setSearchProduct("");
-    setSearchUser("");
-    setDateFrom("");
-    setDateTo("");
-    setPriceFrom("");
-    setPriceTo("");
-  };
-
-  const hasActiveFilters = filterType !== "all" || searchProduct || searchUser || dateFrom || dateTo || priceFrom || priceTo;
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-          </svg>
-          <p className="text-gray-600">Loading bills...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <svg className="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-red-600">Error loading bills. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex items-center space-x-4 mb-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/seller">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Back to Dashboard</span>
+                <span className="sm:hidden">Back</span>
+              </Link>
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Bills Management</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  View and manage all bills in the system
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                  Bills Management
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:hidden">
+                  Manage transactions
                 </p>
               </div>
-              <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="date">Sort by Date</option>
-                  <option value="id">Sort by ID</option>
-                  <option value="price">Sort by Price</option>
-                  <option value="type">Sort by Type</option>
-                </select>
-                <button
-                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  {sortOrder === "asc" ? "↑" : "↓"}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <div className="w-full flex flex-col md:flex-row md:flex-wrap gap-4">
-              {/* Group 1: Type, Product, User */}
-              <div className="flex flex-col md:flex-row gap-4 flex-1 min-w-[250px]">
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="buy">Buy</option>
-                    <option value="sell">Sell</option>
-                    <option value="sale">Sale</option>
-                  </select>
-                </div>
-
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Search Product</label>
-                  <input
-                    type="text"
-                    placeholder="Product name..."
-                    value={searchProduct}
-                    onChange={(e) => setSearchProduct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Search User</label>
-                  <input
-                    type="text"
-                    placeholder="User name..."
-                    value={searchUser}
-                    onChange={(e) => setSearchUser(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-              {/* Group 2: Date and Price */}
-              <div className="flex flex-col md:flex-row gap-4 flex-1 min-w-[250px]">
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price From</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
-                    value={priceFrom}
-                    onChange={(e) => setPriceFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price To</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
-                    value={priceTo}
-                    onChange={(e) => setPriceTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-              </div>
             </div>
 
-            {hasActiveFilters && (
-              <div className="mt-4 flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  {filteredAndSortedBills.length} of {bills.length} bills match your filters
-                </span>
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            )}
+            <Button asChild size="sm" className="w-full sm:w-auto">
+              <Link href="/seller/newbill">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="sm:hidden">New Bill</span>
+                <span className="hidden sm:inline">Create New Bill</span>
+              </Link>
+            </Button>
           </div>
 
-          {/* Bills Table */}
-          <div className="overflow-x-auto">
-            {filteredAndSortedBills.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+          <p className="hidden sm:block text-gray-600 dark:text-gray-400 mt-2">
+            View and manage all purchase and sales transactions
+          </p>
+        </div>
+        {/* Filters */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by ID, date: 2025-01-01, product, client or price,..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Filter by Type</label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="buy">Purchases</SelectItem>
+                    <SelectItem value="sell">Sales</SelectItem>
+                    <SelectItem value="user_sale">User Orders</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sort by</label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">
+                      Date (Newest First)
+                    </SelectItem>
+                    <SelectItem value="date-asc">
+                      Date (Oldest First)
+                    </SelectItem>
+                    <SelectItem value="price-desc">
+                      Price (High to Low)
+                    </SelectItem>
+                    <SelectItem value="price-asc">
+                      Price (Low to High)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bills Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Transaction Records</CardTitle>
+            <CardDescription>
+              {filteredBills.length}{" "}
+              {filteredBills.length === 1 ? "record" : "records"} found
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {bills.isBillsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : filteredBills.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <FileText className="h-16 w-16 text-gray-300 mb-4" />
                 <p className="text-gray-500 text-lg">No bills found.</p>
-                <p className="text-gray-400 text-sm mt-1">
-                  {hasActiveFilters ? "Try adjusting your filters." : "No bills have been created yet."}
-                </p>
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Bill ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Products
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAndSortedBills.map((bill) => (
-                    <tr key={bill.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{bill.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(bill.type, bill.user)}`}>
-                          {bill.user ? "SALE" : bill.type.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(bill.date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ${parseFloat(bill.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="space-y-1">
-                          {bill.products_details?.map((productDetail, index) => (
-                            <div key={index} className="flex items-center justify-between">
-                              <span className="text-gray-700">
-                                {productDetail.product.brand} {productDetail.product.name}
-                              </span>
-                              <span className="text-gray-500 text-xs bg-gray-100 px-2 py-1 rounded">
-                                Qty: {productDetail.quantity}
-                              </span>
-                            </div>
-                          ))}
+              <>
+                {/* Mobile Layout - Card Based */}
+                <div className="lg:hidden space-y-4">
+                  {filteredBills.map((bill) => (
+                    <Card key={bill.id} className="overflow-hidden">
+                      <CardContent className="p-0">
+                        {/* Header */}
+                        <div className="bg-gray-50 dark:bg-gray-800 p-3">
+                          <div className="flex justify-between items-center">
+                            <Badge variant="outline" className="bg-white">
+                              #{bill.id}
+                            </Badge>
+                            <Badge
+                              variant={
+                                bill.type === "sell"
+                                  ? bill.user != null
+                                    ? "default"
+                                    : "outline"
+                                  : "secondary"
+                              }
+                              className="capitalize"
+                            >
+                              {bill.type === "sell" ? (
+                                <>
+                                  <ShoppingBag className="h-3 w-3 mr-1" />
+                                  {bill.user != null
+                                    ? "User Order"
+                                    : "Admin Sale"}
+                                </>
+                              ) : (
+                                <>
+                                  <Package className="h-3 w-3 mr-1" />
+                                  Purchase
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center mt-2 text-sm text-gray-500">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            {formatDate(bill.date)}
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {bill.user ? bill.user : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
 
-          {/* Summary */}
-          {filteredAndSortedBills.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600">
-                <span>Showing {filteredAndSortedBills.length} of {bills.length} bills</span>
-                <span className="mt-2 sm:mt-0">
-                  Total Value: ${filteredAndSortedBills.reduce((sum, bill) => sum + parseFloat(bill.price), 0).toFixed(2)}
-                </span>
+                        {/* Content */}
+                        <div className="p-3 space-y-3">
+                          {/* Products */}
+                          <div>
+                            <h4 className="text-xs font-medium text-gray-500 mb-2">
+                              PRODUCTS
+                            </h4>
+                            <div className="space-y-1">
+                              {bill.products_details?.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between text-sm"
+                                >
+                                  <span className="font-medium">
+                                    {getProductName(item.product.id)}
+                                  </span>
+                                  <span className="text-gray-500">
+                                    × {item.quantity}
+                                  </span>
+                                </div>
+                              )) || (
+                                <span className="text-gray-400 text-sm">
+                                  No items
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Amount and Client */}
+                          <div className="flex justify-between items-center pt-2 border-t">
+                            <div>
+                              <p className="text-xs text-gray-500">CLIENT</p>
+                              <p className="font-semibold">{bill.user}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500">AMOUNT</p>
+                              <p className="text-lg font-bold text-blue-600">
+                                ${Number.parseFloat(bill.price).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Layout - Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Products</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Client</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBills.map((bill) => (
+                        <TableRow key={bill.id}>
+                          <TableCell className="font-medium">
+                            #{bill.id}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                              {formatDate(bill.date)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                bill.type === "sell"
+                                  ? bill.user != null
+                                    ? "default"
+                                    : "outline"
+                                  : "secondary"
+                              }
+                              className="capitalize"
+                            >
+                              {bill.type === "sell" ? (
+                                <>
+                                  <ShoppingBag className="h-3 w-3 mr-1" />
+                                  {bill.user != null
+                                    ? "User Order"
+                                    : "Admin Sale"}
+                                </>
+                              ) : (
+                                <>
+                                  <Package className="h-3 w-3 mr-1" />
+                                  Purchase
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {bill.products_details?.map((item, index) => (
+                                <div key={index} className="text-sm">
+                                  <span className="font-medium">
+                                    {getProductName(item.product.id)}
+                                  </span>
+                                  <span className="text-gray-500 ml-2">
+                                    × {item.quantity}
+                                  </span>
+                                </div>
+                              )) || (
+                                <span className="text-gray-400">No items</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            ${Number.parseFloat(bill.price).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <b>{bill.user}</b>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Summary Cards */}
+        {searchTerm.trim() !== "" || filterType !== "all" ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Filtered Transactions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filteredBills?.length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {filterType === "all"
+                    ? "All records"
+                    : filterType === "buy"
+                    ? "Purchase records"
+                    : "Sales records"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Sales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  $
+                  {filteredBills
+                    ?.filter((bill) => bill.type === "sell")
+                    .reduce(
+                      (sum, bill) => sum + Number.parseFloat(bill.price),
+                      0
+                    )
+                    .toFixed(2) || "0.00"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Revenue from filtered sales
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Filtered Purchases
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  $
+                  {filteredBills
+                    ?.filter((bill) => bill.type === "buy")
+                    .reduce(
+                      (sum, bill) => sum + Number.parseFloat(bill.price),
+                      0
+                    )
+                    .toFixed(2) || "0.00"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Spent on inventory
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Transactions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {bills.bills?.length || 0}
               </div>
-            </div>
-          )}
+              <p className="text-xs text-muted-foreground">
+                {filterType === "all"
+                  ? "All records"
+                  : filterType === "buy"
+                  ? "Purchase records"
+                  : "Sales records"}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                $
+                {bills.bills
+                  ?.filter((bill) => bill.type === "sell")
+                  .reduce((sum, bill) => sum + Number.parseFloat(bill.price), 0)
+                  .toFixed(2) || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Revenue from sales
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Purchases
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                $
+                {bills.bills
+                  ?.filter((bill) => bill.type === "buy")
+                  .reduce((sum, bill) => sum + Number.parseFloat(bill.price), 0)
+                  .toFixed(2) || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Spent on inventory
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
 
-export function MyPurchasesCompRaw() {
-  const [bills, setBills] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  // Filter states
-  const [searchProduct, setSearchProduct] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
-  // Sort states
-  const [sortBy, setSortBy] = useState("date");
-  const [sortOrder, setSortOrder] = useState("desc");
+export function MyPurchasesComp() {
+  const dispatch = useDispatch();
+  const bills = useSelector((state) => state.bills);
+  const username = useSelector((state) => state.user.username);
+  const [filteredBills, setFilteredBills] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
+  const { getProductName } = useProductLookup();
 
   useEffect(() => {
-    setIsLoading(true);
-    api.get("/product/mybills/")
-      .then(res => setBills(res.data))
-      .catch(() => setError(true))
-      .finally(() => setIsLoading(false));
-  }, []);
+    // Change this line to fetch user-specific bills
+    dispatch(getUserBills());
+  }, [dispatch]);
 
-  const filteredAndSortedBills = useMemo(() => {
-    let filtered = bills;
-    if (searchProduct.trim()) {
-      filtered = filtered.filter(bill =>
-        bill.products_details?.some(productDetail =>
-          `${productDetail.product.brand} ${productDetail.product.name}`
-            .toLowerCase()
-            .includes(searchProduct.toLowerCase())
-        )
-      );
-    }
-    if (dateFrom) {
-      filtered = filtered.filter(bill => new Date(bill.date) >= new Date(dateFrom));
-    }
-    if (dateTo) {
-      filtered = filtered.filter(bill => new Date(bill.date) <= new Date(dateTo));
-    }
-    if (priceFrom) {
-      filtered = filtered.filter(bill => parseFloat(bill.price) >= parseFloat(priceFrom));
-    }
-    if (priceTo) {
-      filtered = filtered.filter(bill => parseFloat(bill.price) <= parseFloat(priceTo));
-    }
-    const sortedBills = [...filtered].sort((a, b) => {
-      let aValue, bValue;
-      switch (sortBy) {
-        case "id":
-          aValue = a.id;
-          bValue = b.id;
-          break;
-        case "date":
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
-          break;
-        case "price":
-          aValue = parseFloat(a.price);
-          bValue = parseFloat(b.price);
-          break;
-        default:
-          aValue = new Date(a.date);
-          bValue = new Date(b.date);
+  useEffect(() => {
+    if (bills.bills) {
+      let filtered = [...bills.bills];
+
+      // Apply type filter
+      if (filterType !== "all") {
+        filtered = filtered.filter((bill) => {
+          if (filterType === "user_sale") {
+            // Filter for sales that have a user (orders from users)
+            return bill.type === "sell" && bill.user != null;
+          } else if (filterType === "sell") {
+            // Filter for admin-created sales (bills without user)
+            return bill.type === "sell" && bill.user == null;
+          } else {
+            return bill.type === filterType;
+          }
+        });
       }
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
+
+      // Apply search filter
+      if (searchTerm.trim() !== "") {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        filtered = filtered.filter((bill) => {
+          return (
+            bill.id.toString().includes(lowerCaseSearchTerm) ||
+            bill.date.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.price.toString().includes(lowerCaseSearchTerm) ||
+            bill.type.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.user?.toLowerCase().includes(lowerCaseSearchTerm) ||
+            bill.products_details?.some((item) =>
+              getProductName(item.product.id)
+                .toLowerCase()
+                .includes(lowerCaseSearchTerm)
+            )
+          );
+        });
       }
-    });
-    return sortedBills;
-  }, [bills, searchProduct, dateFrom, dateTo, priceFrom, priceTo, sortBy, sortOrder]);
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case "date-asc":
+            return new Date(a.date) - new Date(b.date);
+          case "date-desc":
+            return new Date(b.date) - new Date(a.date);
+          case "price-asc":
+            return a.price - b.price;
+          case "price-desc":
+            return b.price - a.price;
+          default:
+            return new Date(b.date) - new Date(a.date);
+        }
+      });
+
+      setFilteredBills(filtered);
+    }
+  }, [bills.bills, searchTerm, filterType, sortBy]);
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  const getTypeColor = (type) => {
-    return type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-  };
-  const clearFilters = () => {
-    setSearchProduct("");
-    setDateFrom("");
-    setDateTo("");
-    setPriceFrom("");
-    setPriceTo("");
-  };
-  const hasActiveFilters = searchProduct || dateFrom || dateTo || priceFrom || priceTo;
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-          </svg>
-          <p className="text-gray-600">Loading your bills...</p>
-        </div>
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <svg className="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-red-600">Error loading your bills. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
+
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Buys</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  View all your bills and purchases
-                </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center space-x-4 mb-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Link>
+            </Button>
+          </div>
+          <div className="flex items-center space-x-3">
+            <ShoppingBag className="h-8 w-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              My Orders
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            View your order history and details
+          </p>
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search Orders</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by ID, date: 2025-01-01, product, client or price,..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="date">Sort by Date</option>
-                  <option value="id">Sort by ID</option>
-                  <option value="price">Sort by Price</option>
-                </select>
-                <button
-                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  {sortOrder === "asc" ? "↑" : "↓"}
-                </button>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sort by</label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">
+                      Date (Newest First)
+                    </SelectItem>
+                    <SelectItem value="date-asc">
+                      Date (Oldest First)
+                    </SelectItem>
+                    <SelectItem value="price-desc">
+                      Amount (High to Low)
+                    </SelectItem>
+                    <SelectItem value="price-asc">
+                      Amount (Low to High)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-          {/* Filters */}
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <div className="w-full flex flex-col md:flex-row md:flex-wrap gap-4">
-              <div className="flex flex-col md:flex-row gap-4 flex-1 min-w-[250px]">
-                <div className="flex-1 min-w-[180px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Search Product</label>
-                  <input
-                    type="text"
-                    placeholder="Product name..."
-                    value={searchProduct}
-                    onChange={(e) => setSearchProduct(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Order History</CardTitle>
+            <CardDescription>
+              {filteredBills.length}{" "}
+              {filteredBills.length === 1 ? "order" : "orders"} found
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {bills.isUserBillsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-              <div className="flex flex-col md:flex-row gap-4 flex-1 min-w-[250px]">
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price From</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
-                    value={priceFrom}
-                    onChange={(e) => setPriceFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-                <div className="flex-1 min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price To</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
-                    value={priceTo}
-                    onChange={(e) => setPriceTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-            {hasActiveFilters && (
-              <div className="mt-4 flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  {filteredAndSortedBills.length} of {bills.length} bills match your filters
-                </span>
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Bills Table */}
-          <div className="overflow-x-auto">
-            {filteredAndSortedBills.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-gray-500 text-lg">No bills found.</p>
-                <p className="text-gray-400 text-sm mt-1">
-                  {hasActiveFilters ? "Try adjusting your filters." : "No bills have been created yet."}
-                </p>
+            ) : filteredBills.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <ShoppingBag className="h-16 w-16 text-gray-300 mb-4" />
+                <p className="text-gray-500 text-lg">No orders found.</p>
+                <Button asChild className="mt-4">
+                  <Link href="/">Start Shopping</Link>
+                </Button>
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Bill ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Products
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAndSortedBills.map((bill) => (
-                    <tr key={bill.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{bill.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(bill.date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ${parseFloat(bill.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <div className="space-y-1">
-                          {bill.products_details?.map((productDetail, index) => (
-                            <div key={index} className="flex items-center justify-between">
-                              <span className="text-gray-700">
-                                {productDetail.product.brand} {productDetail.product.name}
-                              </span>
-                              <span className="text-gray-500 text-xs bg-gray-100 px-2 py-1 rounded">
-                                Qty: {productDetail.quantity}
-                              </span>
+              <div className="space-y-4 md:space-y-6">
+                {filteredBills.map((bill) => (
+                  <Card key={bill.id} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      {/* Header Section */}
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 md:p-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                            <Badge variant="outline" className="bg-white w-fit">
+                              #{bill.id}
+                            </Badge>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              {formatDate(bill.date)}
                             </div>
-                          ))}
+                          </div>
+                          <div className="text-lg md:text-xl font-bold text-blue-600">
+                            ${Number.parseFloat(bill.price).toFixed(2)}
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-          {/* Summary */}
-          {filteredAndSortedBills.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600">
-                <span>Showing {filteredAndSortedBills.length} of {bills.length} bills</span>
-                <span className="mt-2 sm:mt-0">
-                  Total Value: ${filteredAndSortedBills.reduce((sum, bill) => sum + parseFloat(bill.price), 0).toFixed(2)}
-                </span>
+                      </div>
+
+                      {/* Order Items Section */}
+                      <div className="p-3 md:p-4">
+                        <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-2 md:mb-3">
+                          Order Items
+                        </h3>
+                        <div className="space-y-2">
+                          {bill.products_details?.length > 0 ? (
+                            bill.products_details.map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 py-2 border-b last:border-0"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <Package className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                                  <span className="font-medium text-sm sm:text-base">
+                                    {getProductName(item.product.id)}
+                                  </span>
+                                </div>
+                                <div className="text-xs sm:text-sm text-gray-500 ml-5 sm:ml-0">
+                                  Qty: {item.quantity}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-gray-400 text-xs sm:text-sm">
+                              No items found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Footer Section */}
+                      <div className="border-t p-3 md:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                        <Badge variant="secondary" className="w-fit">
+                          Completed
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
-          )}
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Summary */}
+        {searchTerm.trim() !== "" ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Filtered Transactions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {filteredBills?.length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {filterType === "all"
+                    ? "All records"
+                    : filterType === "buy"
+                    ? "Purchase records"
+                    : "Sales records"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Sales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  $
+                  {filteredBills
+                    ?.filter((bill) => bill.type === "sell")
+                    .reduce(
+                      (sum, bill) => sum + Number.parseFloat(bill.price),
+                      0
+                    )
+                    .toFixed(2) || "0.00"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Revenue from filtered sales
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Filtered Purchases
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  $
+                  {filteredBills
+                    ?.filter((bill) => bill.type === "buy")
+                    .reduce(
+                      (sum, bill) => sum + Number.parseFloat(bill.price),
+                      0
+                    )
+                    .toFixed(2) || "0.00"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Spent on inventory
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {bills.userBills?.length || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Lifetime purchases
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                $
+                {filteredBills
+                  .reduce((sum, bill) => sum + Number.parseFloat(bill.price), 0)
+                  .toFixed(2) || "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground">Lifetime spending</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Average Order
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                $
+                {filteredBills.length > 0
+                  ? (
+                      filteredBills.reduce(
+                        (sum, bill) => sum + Number.parseFloat(bill.price),
+                        0
+                      ) / filteredBills.length
+                    ).toFixed(2)
+                  : "0.00"}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Average order value
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
-
-export const MyPurchasesComp = withRole(MyPurchasesCompRaw, ["ADMIN", "CLIENT"]);

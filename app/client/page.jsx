@@ -1,17 +1,16 @@
 "use client";
-import ProductsHome from "@/components/ProductsHome";
 import { Provider } from "react-redux";
 import store from "@/redux/store";
+import ProductsHome from "@/components/ProductsHome";
 import withRole from "@/utils/withRole";
 
-function client() {
+function ClientPage() {
   return (
     <Provider store={store}>
-      <main>
-        <ProductsHome />
-      </main>
+      <ProductsHome />
     </Provider>
   );
 }
 
-export default withRole(client, "CLIENT");
+// Allow both CLIENT and ADMIN to access this page
+export default withRole(ClientPage, ["CLIENT", "ADMIN"]);

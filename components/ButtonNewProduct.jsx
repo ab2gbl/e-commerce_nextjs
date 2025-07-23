@@ -1,17 +1,19 @@
-import withRole from "@/utils/withRole";
-import Link from "next/link";
+import withRole from "@/utils/withRole"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 function ButtonNewProduct({ url }) {
   return (
-    <Link
-      href={url}
-      style={{ position: "fixed", bottom: "10vh", right: "10vw" }}
-    >
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        New Product
-      </button>
-    </Link>
-  );
+    <div className="fixed bottom-6 right-6 z-40">
+      <Button asChild size="lg" className="rounded-full shadow-lg hover:shadow-xl transition-all">
+        <Link href={url}>
+          <Plus className="h-5 w-5 mr-2" />
+          New Product
+        </Link>
+      </Button>
+    </div>
+  )
 }
 
-export default withRole(ButtonNewProduct, "ADMIN");
+export default withRole(ButtonNewProduct, "ADMIN")

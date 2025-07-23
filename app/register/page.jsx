@@ -1,10 +1,13 @@
-import RegisterComp from "@/components/RegisterComp";
-export default function register() {
-    return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-100">
-          <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <RegisterComp/>
-          </div>
+import RegisterComp from "@/components/RegisterComp"
+
+export default function RegisterPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <RegisterComp />
         </div>
-        )    
+      </div>
+    </div>
+  )
 }

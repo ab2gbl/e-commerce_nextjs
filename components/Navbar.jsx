@@ -1,122 +1,263 @@
-// components/Navbar.js
 "use client";
-
 import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import { logout } from "@/redux/slices/userSlice";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Smartphone,
+  ShoppingCart,
+  User,
+  Settings,
+  LogOut,
+  Menu,
+  Plus,
+  FileText,
+  Users,
+  Package,
+} from "lucide-react";
 
 export default function Navbar() {
   const router = useRouter();
   const role = useSelector((state) => state.user.role);
   const username = useSelector((state) => state.user.username);
   const dispatch = useDispatch();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-              dispatch(logout());
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              router.push("/login");
+    dispatch(logout());
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    router.push("/login");
   };
 
-  return (
-    <nav className="sticky top-0 z-50 bg-white shadow-md w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          {/* Logo/Brand */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="text-xl font-bold text-blue-600">E-Commerce</Link>
-          </div>
-          {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-6 items-center">
-            <Link href="/" className="hover:text-blue-600 font-medium">Home</Link>
-            <Link href="/cart" className="hover:text-blue-600 font-medium">Cart</Link>
-            {role && (
-              <Link href="/mybills" className="hover:text-blue-600 font-medium">My Purchases</Link>
-            )}
-            {role === "ADMIN" && (
-              <div className="relative group">
-                <button className="hover:text-red-700 text-red-600 font-semibold focus:outline-none flex items-center">
-                  Admin Actions
-                  <svg className="inline ml-1 w-4 h-4 text-red-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <ul className="absolute left-0 mt-2 w-44 bg-white border border-red-200 rounded-md shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150 z-50">
-                  <li>
-                    <Link href="/seller/newadmin" className="block px-4 py-2 hover:bg-red-50 text-red-700 hover:text-red-900 font-semibold">Add Admin</Link>
-                  </li>
-                  <li>
-                    <Link href="/seller/newbill" className="block px-4 py-2 hover:bg-red-50 text-red-700 hover:text-red-900 font-semibold">Add Bill</Link>
-                  </li>
-                  <li>
-                    <Link href="/seller/bills" className="block px-4 py-2 hover:bg-red-50 text-red-700 hover:text-red-900 font-semibold">Bills</Link>
-                  </li>
-                </ul>
-              </div>
-            )}
-            
+  const adminMenuItems = [
+    { href: "/seller/newadmin", label: "Add Admin", icon: Users },
+    { href: "/seller/newbill", label: "Add Bill", icon: Plus },
+    { href: "/seller/bills", label: "Bills", icon: FileText },
+  ];
 
+  return (
+    <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-950/95 dark:supports-[backdrop-filter]:bg-gray-950/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+              <Smartphone className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              PhoneStore
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            {role === "ADMIN" && (
+              <Link
+                href="/seller"
+                className="text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+              >
+                Dashboard
+              </Link>
+            )}
+            <Link
+              href="/client"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              href="/cart"
+              className="flex items-center space-x-1 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>Cart</span>
+            </Link>
+            {role && (
+              <Link
+                href="/mybills"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+              >
+                My Orders
+              </Link>
+            )}
+
+            {/* Admin Dropdown */}
+            {role === "ADMIN" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {adminMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link href={item.href} className="flex items-center">
+                          <Icon className="h-4 w-4 mr-2" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* User Menu */}
             {!role ? (
-              <Link href="/login" className="hover:text-blue-600 font-medium">Login</Link>
+              <Button asChild variant="default">
+                <Link href="/login">Sign In</Link>
+              </Button>
             ) : (
-              <>
-                <Link href="/myinfo" className="hover:text-blue-600 font-medium"> 
-                  <span className="text-gray-700 font-medium">{username} ({role})</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="ml-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition duration-200"
-                >
-                  Logout
-                </button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-sm font-medium">{username}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {role}
+                    </Badge>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/myinfo" className="flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-600"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-gray-700 hover:text-blue-600 focus:outline-none"
-              aria-label="Toggle menu"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="sm">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <div className="flex flex-col space-y-4 mt-6">
+                <Link
+                  href="/client"
+                  className="flex items-center space-x-2 text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Package className="h-5 w-5" />
+                  <span>Home</span>
+                </Link>
+                <Link
+                  href="/cart"
+                  className="flex items-center space-x-2 text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Cart</span>
+                </Link>
+                {role && (
+                  <Link
+                    href="/mybills"
+                    className="flex items-center space-x-2 text-lg font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <FileText className="h-5 w-5" />
+                    <span>My Orders</span>
+                  </Link>
+                )}
+
+                {role === "ADMIN" && (
+                  <>
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-semibold text-red-600 mb-2">
+                        Admin Actions
+                      </h3>
+
+                      {adminMenuItems.slice(1).map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="flex items-center space-x-2 text-sm py-2"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                <div className="border-t pt-4">
+                  {!role ? (
+                    <Button asChild className="w-full">
+                      <Link
+                        href="/login"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <User className="h-5 w-5" />
+                        <span className="font-medium">{username}</span>
+                        <Badge variant="secondary">{role}</Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white shadow-md px-4 pt-2 pb-4 space-y-2">
-          <Link href="/" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link href="/cart" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Cart</Link>
-          <Link href="/myinfo" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>My Info</Link>
-          {role === "ADMIN" && (
-            <>
-              <Link href="/seller/newadmin" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Add Admin</Link>
-              <Link href="/seller/newbill" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Add Bill</Link>
-              <Link href="/seller/bills" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Bills</Link>
-            </>
-          )}
-          {!role ? (
-            <Link href="/login" className="block hover:text-blue-600 font-medium" onClick={() => setMenuOpen(false)}>Login</Link>
-          ) : (
-            <>
-              <span className="block text-gray-700 font-medium">{username} ({role})</span>
-              <button
-                onClick={() => { setMenuOpen(false); handleLogout(); }}
-                className="mt-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition duration-200 w-full text-left"
-          >
-            Logout
-          </button>
-        </>
-      )}
-    </div>
-      )}
     </nav>
   );
 }

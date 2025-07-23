@@ -1,35 +1,47 @@
-"use client"
-import { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import Link from "next/link"
-import { updateCount, removeProduct, addProduct } from "@/redux/slices/cartSlice"
-import PayAll from "./PayAll"
-import api from "@/utils/api"
-import toast, { Toaster } from "react-hot-toast"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Trash2, Plus, Minus, CreditCard, ArrowLeft, Package } from "lucide-react"
+"use client";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Link from "next/link";
+import {
+  updateCount,
+  removeProduct,
+  addProduct,
+} from "@/redux/slices/cartSlice";
+import PayAll from "./PayAll";
+import api from "@/utils/api";
+import toast, { Toaster } from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  CreditCard,
+  ArrowLeft,
+  Package,
+} from "lucide-react";
 
 export default function Cart() {
-  const cart = useSelector((state) => state.cart)
-  const dispatch = useDispatch()
-  const [showModal, setShowModal] = useState(false)
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false)
+  const cart = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
+  const [showModal, setShowModal] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
   // Load cart from localStorage if Redux cart is empty
   useEffect(() => {
     if (cart.products.length === 0) {
-      const storedCart = localStorage.getItem("cartProducts")
+      const storedCart = localStorage.getItem("cartProducts");
       if (storedCart) {
         try {
-          const parsed = JSON.parse(storedCart)
+          const parsed = JSON.parse(storedCart);
           if (Array.isArray(parsed)) {
             parsed.forEach((item) => {
-              dispatch(addProduct(item))
-            })
+              dispatch(addProduct(item));
+            });
           }
         } catch (e) {
           // ignore parse errors
@@ -37,62 +49,64 @@ export default function Cart() {
       }
     }
     // eslint-disable-next-line
-  }, [])
+  }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("cartProducts", JSON.stringify(cart.products))
-  }, [cart.products])
+    localStorage.setItem("cartProducts", JSON.stringify(cart.products));
+  }, [cart.products]);
 
   const updateProductCount = (productId, newQuantity) => {
     if (newQuantity <= 0) {
-      dispatch(removeProduct(productId))
+      dispatch(removeProduct(productId));
     } else {
-      dispatch(updateCount({ productId, newQuantity }))
+      dispatch(updateCount({ productId, newQuantity }));
     }
-  }
+  };
 
   const remove = (productId) => {
-    dispatch(removeProduct(productId))
-    toast.success("Item removed from cart")
-  }
+    dispatch(removeProduct(productId));
+    toast.success("Item removed from cart");
+  };
 
   const checkProductAvailability = async () => {
-    setIsCheckingAvailability(true)
+    setIsCheckingAvailability(true);
     try {
-      const unavailableProducts = []
+      const unavailableProducts = [];
       // Check each product in the cart
       for (const item of cart.products) {
         try {
-          const response = await api.get(`/product/product/${item.product.id}`)
-          const currentProduct = response.data
+          const response = await api.get(`/product/product/${item.product.id}`);
+          const currentProduct = response.data;
           if (!currentProduct.available) {
             unavailableProducts.push({
               name: item.product.name,
               reason: "Product is no longer available",
-            })
-            continue
+            });
+            continue;
           }
           if (currentProduct.in_stock < item.count) {
             unavailableProducts.push({
               name: item.product.name,
               reason: `Only ${currentProduct.in_stock} items available`,
-            })
-            continue
+            });
+            continue;
           }
         } catch (err) {
           if (err.response && err.response.status === 404) {
             unavailableProducts.push({
               name: item.product.name,
               reason: "Product has been deleted",
-            })
+            });
           } else {
-            throw err
+            throw err;
           }
         }
       }
       if (unavailableProducts.length > 0) {
-        const messages = unavailableProducts.map((p) => `${p.name}: ${p.reason}`)
+        const messages = unavailableProducts.map(
+          (p) => `${p.name}: ${p.reason}`
+        );
         toast.error(
           <div>
             <p>Some products are not available:</p>
@@ -102,33 +116,36 @@ export default function Cart() {
               ))}
             </ul>
           </div>,
-          { duration: 5000 },
-        )
-        return false
+          { duration: 5000 }
+        );
+        return false;
       }
-      return true
+      return true;
     } catch (error) {
-      toast.error("Failed to verify product availability. Please try again.")
-      return false
+      toast.error("Failed to verify product availability. Please try again.");
+      return false;
     } finally {
-      setIsCheckingAvailability(false)
+      setIsCheckingAvailability(false);
     }
-  }
+  };
 
   const handleCheckoutClick = async () => {
-    const isAvailable = await checkProductAvailability()
+    const isAvailable = await checkProductAvailability();
     if (isAvailable) {
-      setShowModal(true)
+      setShowModal(true);
     }
-  }
+  };
 
   const calculateTotal = () => {
-    return cart.products.reduce((total, item) => total + item.product.price * item.count, 0)
-  }
+    return cart.products.reduce(
+      (total, item) => total + item.product.price * item.count,
+      0
+    );
+  };
 
   const calculateItemCount = () => {
-    return cart.products.reduce((total, item) => total + item.count, 0)
-  }
+    return cart.products.reduce((total, item) => total + item.count, 0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -146,7 +163,9 @@ export default function Cart() {
           </div>
           <div className="flex items-center space-x-3">
             <ShoppingCart className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shopping Cart</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Shopping Cart
+            </h1>
             {cart.products.length > 0 && (
               <Badge variant="secondary" className="text-lg px-3 py-1">
                 {calculateItemCount()} items
@@ -159,9 +178,11 @@ export default function Cart() {
           <Card className="text-center py-16">
             <CardContent>
               <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Your cart is empty</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                Your cart is empty
+              </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Looks like you haven't added any items to your cart yet.
+                Looks like you haven&apos;t added any items to your cart yet.
               </p>
               <Button asChild>
                 <Link href="/">Start Shopping</Link>
@@ -191,24 +212,43 @@ export default function Cart() {
                           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {item.product.brand} {item.product.name}
                           </h3>
-                          <p className="text-gray-600 dark:text-gray-400 capitalize">{item.product.type}</p>
+                          <p className="text-gray-600 dark:text-gray-400 capitalize">
+                            {item.product.type}
+                          </p>
                           <div className="flex items-center space-x-2 mt-2">
-                            <Badge variant={item.product.available ? "default" : "destructive"}>
-                              {item.product.available ? "In Stock" : "Out of Stock"}
+                            <Badge
+                              variant={
+                                item.product.available
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {item.product.available
+                                ? "In Stock"
+                                : "Out of Stock"}
                             </Badge>
-                            <span className="text-sm text-gray-500">Stock: {item.product.in_stock}</span>
+                            <span className="text-sm text-gray-500">
+                              Stock: {item.product.in_stock}
+                            </span>
                           </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           {/* Quantity Controls */}
                           <div className="flex items-center space-x-3">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quantity:</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Quantity:
+                            </span>
                             <div className="flex items-center border rounded-lg">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => updateProductCount(item.product.id, item.count - 1)}
+                                onClick={() =>
+                                  updateProductCount(
+                                    item.product.id,
+                                    item.count - 1
+                                  )
+                                }
                                 disabled={item.count <= 1}
                               >
                                 <Minus className="h-4 w-4" />
@@ -219,9 +259,18 @@ export default function Cart() {
                                 max={item.product.in_stock}
                                 value={item.count}
                                 onChange={(e) => {
-                                  const newValue = Number.parseInt(e.target.value, 10)
-                                  if (newValue > 0 && newValue <= item.product.in_stock) {
-                                    updateProductCount(item.product.id, newValue)
+                                  const newValue = Number.parseInt(
+                                    e.target.value,
+                                    10
+                                  );
+                                  if (
+                                    newValue > 0 &&
+                                    newValue <= item.product.in_stock
+                                  ) {
+                                    updateProductCount(
+                                      item.product.id,
+                                      newValue
+                                    );
                                   }
                                 }}
                                 className="w-16 text-center border-0 focus:ring-0"
@@ -229,7 +278,12 @@ export default function Cart() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => updateProductCount(item.product.id, item.count + 1)}
+                                onClick={() =>
+                                  updateProductCount(
+                                    item.product.id,
+                                    item.count + 1
+                                  )
+                                }
                                 disabled={item.count >= item.product.in_stock}
                               >
                                 <Plus className="h-4 w-4" />
@@ -240,7 +294,9 @@ export default function Cart() {
                           {/* Price and Actions */}
                           <div className="flex items-center justify-between sm:justify-end space-x-4">
                             <div className="text-right">
-                              <p className="text-sm text-gray-500">Unit Price</p>
+                              <p className="text-sm text-gray-500">
+                                Unit Price
+                              </p>
                               <p className="text-lg font-semibold text-gray-900 dark:text-white">
                                 ${item.product.price}
                               </p>
@@ -265,7 +321,9 @@ export default function Cart() {
                         {/* Product Link */}
                         <div>
                           <Button variant="link" asChild className="p-0 h-auto">
-                            <Link href={`/products/details/${item.product.id}`}>View Product Details</Link>
+                            <Link href={`/products/details/${item.product.id}`}>
+                              View Product Details
+                            </Link>
                           </Button>
                         </div>
                       </div>
@@ -284,11 +342,16 @@ export default function Cart() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     {cart.products.map((item) => (
-                      <div key={item.product.id} className="flex justify-between text-sm">
+                      <div
+                        key={item.product.id}
+                        className="flex justify-between text-sm"
+                      >
                         <span className="text-gray-600">
                           {item.product.name} × {item.count}
                         </span>
-                        <span className="font-medium">${(item.product.price * item.count).toFixed(2)}</span>
+                        <span className="font-medium">
+                          ${(item.product.price * item.count).toFixed(2)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -298,7 +361,9 @@ export default function Cart() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium">${calculateTotal().toFixed(2)}</span>
+                      <span className="font-medium">
+                        ${calculateTotal().toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
@@ -306,7 +371,9 @@ export default function Cart() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">Calculated at checkout</span>
+                      <span className="font-medium">
+                        Calculated at checkout
+                      </span>
                     </div>
                   </div>
 
@@ -314,7 +381,9 @@ export default function Cart() {
 
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span className="text-blue-600">${calculateTotal().toFixed(2)}</span>
+                    <span className="text-blue-600">
+                      ${calculateTotal().toFixed(2)}
+                    </span>
                   </div>
 
                   <Button
@@ -347,7 +416,11 @@ export default function Cart() {
             <Card className="w-full max-w-lg">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Secure Checkout</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowModal(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowModal(false)}
+                >
                   ×
                 </Button>
               </CardHeader>
@@ -359,5 +432,5 @@ export default function Cart() {
         )}
       </div>
     </div>
-  )
+  );
 }

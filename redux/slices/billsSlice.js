@@ -12,13 +12,7 @@ export const createBill = createAsyncThunk("createBill", async (param) => {
 });
 
 export const getUserBills = createAsyncThunk("getUserBills", async () => {
-  const response = await api.get("/product/mybills/", {
-    headers: {
-      "Content-Type": "application/json",
-      // Add authentication headers if needed
-      Authorization: `Bearer ${localStorage.getItem("token")}`, // Adjust based on your auth implementation
-    },
-  });
+  const response = await api.get("/product/mybills/");
 
   return await response.data;
 });

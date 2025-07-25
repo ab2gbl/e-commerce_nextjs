@@ -564,8 +564,8 @@ export function MyPurchasesComp() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (bills.bills) {
-      let filtered = [...bills.bills];
+    if (bills.userBills) {
+      let filtered = [...bills.userBills];
 
       // Apply type filter
       if (filterType !== "all") {
@@ -619,7 +619,7 @@ export function MyPurchasesComp() {
 
       setFilteredBills(filtered);
     }
-  }, [bills.bills, searchTerm, filterType, sortBy]);
+  }, [bills.userBills, searchTerm, filterType, sortBy]);
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "short", day: "numeric" };
